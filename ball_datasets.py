@@ -18,13 +18,13 @@ from property_maps import property_df,get_num_classes
 
 
 class tactile_explorations(Dataset):
-    def __init__(self, train=True, transform=None, dataset='new',action_select=None):
+    def __init__(self, train=True, transform=None, dataset='all',action_select=None):
         ds = 'train_df' if train else 'test_df'
         if dataset=='objects':
             ds = ds+'_objs'
         if dataset=='new':
             ds = ds+'_newobjs'
-        path2data = f'../data/Experiment6/{ds}'
+        path2data = f'data/{ds}'
         df = pd.read_pickle(path2data)
 
         if action_select is not None:
@@ -40,8 +40,6 @@ class tactile_explorations(Dataset):
         self.one_hot_action = torch.zeros(len(self.df),len(self.act_list))
         for i,act in enumerate(self.act_list):
             self.one_hot_action[(self.df['action']==act).values,i]=1.0
-        self.transform = transform
-        self.data = self.apply_transform()
         # if transform=='compute':
         #     self.transform = compute_transform(self.df)
         #     self.data = self.apply_transform()
@@ -75,10 +73,10 @@ class tactile_explorations(Dataset):
 
         cnt=0
         for col in self.col_order:
-            mn,rng=0.0,1.0
-            if self.transform is not None:
-                if col in self.transform.keys():
-                    mn,rng=self.transform[col]
+            if col in self.transform.keys():
+                mn,rng=self.transform[col]
+            else:
+                mn,rng=0.0,1.0
             col_dat = torch.tensor(np.stack(df[col].values))
             # if '_ac' in col:
             #     col_dat = torch.log10(torch.exp(col_dat)+1e-7)
@@ -202,9 +200,9 @@ class full_classification(tactile_explorations):
         #else: raise ValueError()
         prop = self.property_values.loc[ball_id][label]
 
-        return self.data[[index]], self.one_hot_action[index], ball_id, prop
+        return self.data[index], self.one_hot_action[index], ball_id, prop
 
-    def set_lbl(self,label):
+    def set_label(self,label):
         if label not in ['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','ball_id','contents_binary']:
             raise ValueError(f"Must be in {['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','ball_id','contents_binary']}.")
         self.label = label
