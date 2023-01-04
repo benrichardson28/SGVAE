@@ -1,0 +1,18 @@
+executable = /home/richardson/miniconda3/envs/ball_env/bin/python
+
+arguments = main.py --dataset=new --save_dir_id=$(Cluster)-$(Process) $(a1) $(a2) $(a3) $(a4) $(a5) --initial_learning_rate=.01
+#--dataset=objects
+
+error = /home/richardson/robot_haptic_perception/tmp_logs/$(Cluster)-lin-6-$(Process).err
+output = /home/richardson/robot_haptic_perception/tmp_logs/$(Cluster)-lin-6-$(Process).out
+log = /home/richardson/robot_haptic_perception/tmp_logs/$(Cluster)-lin-6-$(Process).log
+
+request_memory = 20000
+request_cpus = 1
+request_gpus = 1
+requirements = (TARGET.CUDACapability >= 7.0) && (TARGET.CUDACapability <= 7.5) && (TARGET.CUDAGlobalMemoryMb > 10000)
+
++MaxRunningPrice=100
++RunningPriceExceededAction = "restart"
+
+queue a1,a2,a3,a4,a5 from sgvae_args.txt

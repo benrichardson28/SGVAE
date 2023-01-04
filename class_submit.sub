@@ -1,0 +1,29 @@
+executable = /home/richardson/miniconda3/envs/ball_env/bin/python
+
+
+arguments = classification_accuracy.py --save_dir_id=$(Process) $(a1) $(a2)
+
+error = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-$(Process).err
+output = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-$(Process).out
+log = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-$(Process).log
+
+request_memory = 20000
+request_cpus = 1
+request_gpus = 1
+requirements = (TARGET.CUDACapability >= 6.0) && (TARGET.CUDACapability <= 7.5) && (TARGET.CUDAGlobalMemoryMb > 10000)
+
++MaxRunningPrice=100
++RunningPriceExceededAction = "restart"
+
+queue a1,a2 from class_args.txt
+
+## Jun12_18-17-09_g06837
+## Jun12_18-17-16_g08938
+## Jun12_18-17-17_g08635
+## Jun12_18-17-20_g04436
+## Jun12_18-17-21_g02939
+## Jun12_18-17-19_g06431
+## Jun12_18-17-20_g08832
+## Jun12_18-17-21_g02534
+## Jun12_18-17-22_g02830
+## Jun12_18-17-27_g03133

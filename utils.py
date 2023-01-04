@@ -10,7 +10,7 @@ import torchvision.transforms as transforms
 import pdb
 import numpy as np
 from torchvision import datasets
-from networks import Encoder,Decoder,baseVAE_encoder,baseVAE_decoder
+from networks import Encoder,Decoder
 
 def setup_models(run_folder):
     config_file = f'{run_folder}/config.yaml'
@@ -28,39 +28,21 @@ def setup_models(run_folder):
     """
     model definitions
     """
-
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    if 'style_dim' not in FLAGS:
-        encoder = baseVAE_encoder(latent_dim=FLAGS.latent_dim,
-                                  in_channels = FLAGS.in_channels,
-                                  hidden_dims = FLAGS.hidden_dims,
-                                  kernels = FLAGS.kernels,
-                                  strides = FLAGS.strides,
-                                  paddings = FLAGS.paddings).to(FLAGS.device)
+    encoder = Encoder(style_dim=FLAGS.style_dim, class_dim=FLAGS.class_dim,
+                      in_channels = FLAGS.in_channels,
+                      hidden_dims = FLAGS.hidden_dims,
+                      kernels = FLAGS.kernels,
+                      strides = FLAGS.strides,
+                      paddings = FLAGS.paddings).to(FLAGS.device)
     #encoder.apply(weights_init)
-        decoder = baseVAE_decoder(latent_dim=FLAGS.latent_dim,
-                                  hidden_dims = FLAGS.hidden_dims,
-                                  out_channels = FLAGS.in_channels,
-                                  kernels = FLAGS.kernels,
-                                  strides = FLAGS.strides,
-                                  paddings = FLAGS.paddings,
-                                  cos = encoder.cos).to(FLAGS.device)
-    else:
-        encoder = Encoder(style_dim=FLAGS.style_dim, class_dim=FLAGS.class_dim,
-                          in_channels = FLAGS.in_channels,
-                          hidden_dims = FLAGS.hidden_dims,
-                          kernels = FLAGS.kernels,
-                          strides = FLAGS.strides,
-                          paddings = FLAGS.paddings).to(FLAGS.device)
-        #encoder.apply(weights_init)
-        decoder = Decoder(style_dim=FLAGS.style_dim, class_dim=FLAGS.class_dim,
-                          hidden_dims = FLAGS.hidden_dims,
-                          out_channels = FLAGS.in_channels,
-                          kernels = FLAGS.kernels,
-                          strides = FLAGS.strides,
-                          paddings = FLAGS.paddings,
-                          cos = encoder.cos).to(FLAGS.device)
+    decoder = Decoder(style_dim=FLAGS.style_dim, class_dim=FLAGS.class_dim,
+                      hidden_dims = FLAGS.hidden_dims,
+                      out_channels = FLAGS.in_channels,
+                      kernels = FLAGS.kernels,
+                      strides = FLAGS.strides,
+                      paddings = FLAGS.paddings,
+                      cos = encoder.cos).to(FLAGS.device)
 
     folder = f'{run_folder}/checkpoints_{FLAGS.batch_size}'
 

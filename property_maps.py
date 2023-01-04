@@ -2,9 +2,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
-import pdb
 
-def property_df(class_type='cluster',scale=True):
+def property_df(class_type='cluster'):
     ballname = {0:'empty',1:'baseball_1',
               2:'red_squishy',3:'blue_green_squishy',4:'golfball_1',
               5:'pingpong_1',6:'purple_spiky',7:'tennis_1',
@@ -48,9 +47,9 @@ def property_df(class_type='cluster',scale=True):
         63:.060,64:.070,
         # for these next ones, size has to be where the hand positions to slide.
         # But actual size in classification should be based on dimension perpendicular to grip.
-        71:.080, 72:.060, 73:.060, 74:.075, 75:.065,
+        71:.080, 72:.060, 73:.065, 74:.075, 75:.065,
         76:.065, 77:.05, 78:.065, 79:0.03, 80:0.05,
-        81:.060, 82:.078, 83:.03, 84:.075, 85:0.07,
+        81:.065, 82:.078, 83:.03, 84:.085, 85:0.07,
         86:.035, 87:.045, 88:.06, 89:.085, 90:.03,
         95:.03,96:.05,97:.07,}
 
@@ -67,7 +66,7 @@ def property_df(class_type='cluster',scale=True):
         63:.060,64:.070,
         # for these next ones, size has to be where the hand positions to slide.
         # But actual size in classification should be based on dimension perpendicular to grip.
-        71:.080, 72:.05 ,73:.065, 74:.06, 75:.065,
+        71:.080, 72:.06 ,73:.07, 74:.06, 75:.07,
         76:.085, 77:.03, 78:.032, 79:.030, 80:.050,
         81:.052, 82:.05, 83:.03,84:.075, 85:.070,
         86:.050, 87:.040, 88:.050, 89:.085, 90:.050,
@@ -193,9 +192,10 @@ def property_df(class_type='cluster',scale=True):
     # obj_prop['contents_rough_label'] = [np.where(cnt_tps==obj_prop['contents'].iloc[i][:4])[0].item() \
     #                                     for i in range(len(obj_prop))]
     obj_prop['contents_binary_label'] = [(i is not None) for i in obj_prop['contents']]
-    if scale:
-        for prop in ['sq_size','pr_size','stiffness','mass']:
-            obj_prop[prop] /= obj_prop[prop].max()
+
+    #scaling labels, easy to invert later if necessary
+    for col in ['sq_size','pr_size','stiffness','mass']:
+        obj_prop[col] /= obj_prop[col].max()
 
     if class_type == 'cluster':
         # do some sort of cluster
@@ -211,13 +211,18 @@ def property_df(class_type='cluster',scale=True):
             obj_prop[f'{att}_cluster_label'] = kmeans.labels_
             obj_prop[f'{att}_cluster_mean']=kmeans.cluster_centers_[kmeans.labels_]
         obj_prop['index_ball']=obj_prop.index
+
     return obj_prop.set_index('ball_id')
 
 
 
 def get_num_classes(label,properties):
-    if 'contents' in label:
-        cnt = properties[f'{label}_label'].unique().shape[0]
+    if label == 'contents_fine':
+        cnt = properties['contents_fine_label'].unique().shape[0]
+    elif label == 'contents_rough':
+        cnt = properties['contents_rough_label'].unique().shape[0]
+    elif label == 'contents_binary':
+        cnt = properties['contents_binary_label'].unique().shape[0]
     elif label in ['sq_size','pr_size','mass','stiffness']:
         cnt = properties[f'{label}_cluster_label'].unique().shape[0]
     else:

@@ -47,11 +47,7 @@ def gen_latent_dataset(FLAGS,loader,encoder,decoder,action_names,device):
             batch = pd.DataFrame(index=np.arange(X.shape[0]), columns=['cm','clv','sm','slv','actions','object'])
             X = X.to(device)
             action_batch = action_batch.to(device)
-            if 'latent_dim' in FLAGS:
-                context,style_mu,style_logvar = cNs_init(X.size(0),X.size(1),
-                                                         FLAGS.latent_dim,0,device)
-            else:
-                context,style_mu,style_logvar = cNs_init(X.size(0),X.size(1),
+            context,style_mu,style_logvar = cNs_init(X.size(0),X.size(1),
                                                      FLAGS.class_dim,FLAGS.style_dim,device)
             cm_ar,clv_ar,sm_ar,slv_ar = [],[],[],[]
             for i in range(4):
@@ -86,9 +82,9 @@ def gen_latent_dataset(FLAGS,loader,encoder,decoder,action_names,device):
 
 def create_datasets(run_folder,ds_train=None,ds_val=None,ds_test=None,properties=None,multiplier=1):
     encoder,decoder,sgvae_FLAGS,device = setup_models(run_folder)
-    sgvae_FLAGS.batch_size = 32
+    sgvae_FLAGS.batch_size = 128
     if ds_train is None:
-        ds_train,ds_val,ds_test,properties = setup_dataset(sgvae_FLAGS)
+        ds_train,ds_val,ds_test,properties = setup_dataset()
     action_names = ds_train.df['action'].unique()
 
     train_df = []
@@ -160,15 +156,15 @@ def classify_latent_vectors(FLAGS,log_dir,tr_ds,vl_ds,ts_ds,prop,latent_types=['
                                      model,optimizer,loss_func,writer)
         writer.close()
         torch.save(best_model.state_dict(),os.path.join(log_dir,f'{mod_type}_model'))
-        #load_dict = {'train':train_loader,'val':val_loader,
-        #             'test':test_loader}
-        # for set_id,load in load_dict.items():
-        #     loss,preds,lbls,acts,objs = test_model(FLAGS.device,load,best_model,
-        #                                            loss_func)
-        #     save_dict = {f'{set_id}_loss':loss,f'{set_id}_preds':preds,
-        #                  f'{set_id}_lbls':lbls,f'{set_id}_actions':acts,
-        #                  f'{set_id}_objs':objs}
-        #     torch.save(save_dict, os.path.join(log_dir,f'{mod_type}_dict'))
+        load_dict = {'train':train_loader,'val':val_loader,
+                     'test':test_loader}
+        for set_id,load in load_dict.items():
+            loss,preds,lbls,acts,objs = test_model(FLAGS.device,load,best_model,
+                                                   loss_func)
+            save_dict = {f'{set_id}_loss':loss,f'{set_id}_preds':preds,
+                         f'{set_id}_lbls':lbls,f'{set_id}_actions':acts,
+                         f'{set_id}_objs':objs}
+            torch.save(save_dict, os.path.join(log_dir,f'{mod_type}_dict'))
 
     return best_model.eval()
 
@@ -298,7 +294,7 @@ def evaluate_all_models(model_dict,tr_ds,vl_ds,ts_ds):
                 temp_dict[f'{prop}_pred_seq{i+1}']=preds[:,i].tolist()
             prop_dict_list.append(pd.DataFrame(temp_dict))
         all_results.append( pd.concat(prop_dict_list, ignore_index=True) )
-    ar_df = pd.concat(all_results,axis=1)
+    ar_df = pd.concat(all_results)
     ar_df = ar_df.loc[:,~ar_df.columns.duplicated()]
 
     return ar_df
@@ -307,19 +303,17 @@ parser = argparse.ArgumentParser()
 
 # add arguments
 parser.add_argument('--save_dir_id', type=str, default=0)
-parser.add_argument('--vae_model', type=str, default='Aug26_19-42-33_LABKJK12') #Aug26_20-56-41_LABKJK12
+parser.add_argument('--vae_model', type=str, default='Aug25_09-46-47_g04712288959-33')
 parser.add_argument('--batch_size', type=float, default=32)
-parser.add_argument('--initial_learning_rate', type=float, default=0.0001)
+parser.add_argument('--initial_learning_rate', type=float, default=0.00001)
 parser.add_argument('--beta_1', type=float, default=0.9, help="default beta_1 val for adam")
 parser.add_argument('--beta_2', type=float, default=0.999, help="default beta_2 val for adam")
 parser.add_argument('--weight_decay', type=float, default=1, help="weight decay for adam")
-parser.add_argument('--end_epoch', type=int, default=100, help="flag to indicate the final epoch of training")
-parser.add_argument('--train_multiplier',type=int, default=4, help="How many random random sequences to generate for training")
+parser.add_argument('--end_epoch', type=int, default=1, help="flag to indicate the final epoch of training")
+parser.add_argument('--train_multiplier',type=int, default=5, help="How many random random sequences to generate for training")
 parser.add_argument('--dataset',type=str, default='new')
 parser.add_argument('--test_properties', type=str, nargs='*', default=['pr_size','sq_size','stiffness','mass','contents_binary'])
 parser.add_argument('--action_select', type=str, default=None, choices=['squeeze', 'press', 'shake', 'slide'])
-parser.add_argument('--skip_style',type=int,default=0)
-parser.add_argument('--load_model',type=str,default=None)
 
 #If not splitting by object, can also have 'ball_id','contents_fine'
 
@@ -327,7 +321,6 @@ class_FLAGS = parser.parse_args()
 
 if __name__ == '__main__':
     dire = 'runs'
-
     file = class_FLAGS.vae_model
     load_path = os.path.join(dire,file)
     save_path = f'classification_results/{file}_{class_FLAGS.save_dir_id}'
@@ -341,39 +334,16 @@ if __name__ == '__main__':
         yaml.dump(class_FLAGS, conf_file)
     print('generating latent representation dataset')
     td,vd,sd = create_datasets(load_path,ds_train,ds_val,ds_test,properties,class_FLAGS.train_multiplier)
-    latent_types=['cm']
-    if class_FLAGS.skip_style == 0: latent_types.append('sm')
 
-    if class_FLAGS.load_model is None:
-        prop_models = {}
-        for prop in class_FLAGS.test_properties:
-            print(f'Classify by {prop}')
-            setattr(class_FLAGS,'label',prop)
-            mod = classify_latent_vectors(class_FLAGS,save_path,td,vd,sd,prop,latent_types)
-            if 'contents' not in prop:
-                prop_models[prop] = mod
-    else:
-        prop_models = {}
-        for prop in class_FLAGS.test_properties:
-            if 'contents' in prop:
-                td.set_lbl(prop)
-                class_cnt = td.get_class_cnt()
-            else:
-                class_cnt = 1
-            #dim=td.data['cm'].iloc[0].shape[1]
-            model = Property_model(z_dim=10, num_classes=class_cnt)
-            model.load_state_dict(torch.load(f'{save_path}/{prop}/content_model',map_location=torch.device('cpu')))
-            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            model.to(device).eval()
-
-            if 'contents' not in prop:
-                prop_models[prop]=model
+    prop_models = {}
+    for prop in class_FLAGS.test_properties:
+        print(f'Classify by {prop}')
+        setattr(class_FLAGS,'label',prop)
+        mod = classify_latent_vectors(class_FLAGS,save_path,td,vd,sd,prop)
+        if 'contents' not in prop:
+            prop_models[prop] = mod
     all_df = evaluate_all_models(prop_models,td,vd,sd)
-    for a in range(4):
-        lbls=[]
-        for i in range(len(all_df)):
-            x = np.array(all_df.iloc[i][[f'pr_size_pred_seq{a+1}',f'sq_size_pred_seq{a+1}',
-                                         f'stiffness_pred_seq{a+1}',f'mass_pred_seq{a+1}']])
-            lbls.append(((properties[['pr_size','sq_size','stiffness','mass']]-x)**2).sum(axis=1).idxmin())
-        all_df[f'object_pred_seq{a+1}']=lbls
-    all_df.to_pickle(os.path.join(save_path,'contents_all_results'))
+    all_df.to_pickle(os.path.join(save_path,'all_results'))
+
+
+    

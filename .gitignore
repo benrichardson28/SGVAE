@@ -1,7 +1,5 @@
-.DS_Store
-.idea/*
-runs/
 __pycache__/*
-log.txt
+*tmp_logs/*
+*runs/*
 *_results/*
-corl_figures/*
+data/*

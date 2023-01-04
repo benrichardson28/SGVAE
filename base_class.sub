@@ -1,0 +1,19 @@
+executable = /home/richardson/miniconda3/envs/ball_env/bin/python
+
+#arguments = baseline_classification.py --save_dir_id=$(Process) --save_folder=$(Cluster) --action_select=slide
+arguments = baseline_classification.py --save_dir_id=$(Process) --save_folder=$(Cluster) --test_properties=contents_binary
+
+error = /home/richardson/robot_haptic_perception/baseclass_tmp_logs/lin-6-$(Process).err
+output = /home/richardson/robot_haptic_perception/baseclass_tmp_logs/lin-6-$(Process).out
+log = /home/richardson/robot_haptic_perception/baseclass_tmp_logs/lin-6-$(Process).log
+
+request_memory = 20000
+request_cpus = 1
+request_gpus = 1
+requirements = (TARGET.CUDACapability >= 6.0) && (TARGET.CUDACapability <= 7.5) && (TARGET.CUDAGlobalMemoryMb > 5000)
+
++MaxRunningPrice=100
++RunningPriceExceededAction = "restart"
+
+queue 10
+

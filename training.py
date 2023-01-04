@@ -1,4 +1,5 @@
 import os
+import os.path
 import random
 import numpy as np
 import math
@@ -12,13 +13,15 @@ from utils import weights_init
 from networks import Encoder, Decoder
 from torch.utils.data import DataLoader
 from utils import reparameterize
+from torch.nn import functional as F
+import torchvision.transforms as transforms
 from tensorboardX import SummaryWriter
 #from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
 from ball_datasets import tactile_explorations,split_indices
 import pdb
 import matplotlib.pyplot as plt
-#import plotting
+import plotting
 
 def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
     if FLAGS.reduction=='sum':
@@ -30,10 +33,9 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
 
     #### gaussian_beta_log_likelihood_loss(pred, target, beta=1):
     scale_x = (torch.exp(logvar_x) + 1e-12)#**0.5
-    beta=FLAGS.beta_nll
     mean, var = torch.squeeze(mu_x,1),torch.squeeze(scale_x)
     logl = -0.5 * ((X - mean) ** 2 / var + torch.log(var) + math.log(2 * math.pi))
-    weight = var.detach() ** beta
+    weight = var.detach() ** FLAGS.beta_nll
 
     if FLAGS.reduction=='sum':
         logp_batch = torch.sum(logl * weight, axis=-1).sum(-1)
@@ -45,13 +47,13 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
         reconstruction_proba = logp_batch.sum(-1).mean()
 
     total_kl = FLAGS.style_coef*style_kl_divergence_loss + FLAGS.class_coef*class_kl_divergence_loss
-    elbo = (reconstruction_proba - FLAGS.beta_vae * total_kl)
+    elbo = (reconstruction_proba - FLAGS.beta_VAE * total_kl)
 
     return elbo, reconstruction_proba, style_kl_divergence_loss, class_kl_divergence_loss
 
 def process(FLAGS, X, action_batch, obj_batch, encoder, decoder, plot_params, act_list=None):
     context = torch.cat([torch.zeros(X.size(0),FLAGS.class_dim),
-                         torch.ones(X.size(0),FLAGS.class_dim)/2.0],dim=1).to(FLAGS.device)
+                         0.5*torch.ones(X.size(0),FLAGS.class_dim)],dim=1).to(FLAGS.device)
 
     style_mu = torch.zeros(X.size(0),X.size(1),FLAGS.style_dim).to(FLAGS.device)
     style_logvar = 0.5*torch.ones(X.size(0),X.size(1),FLAGS.style_dim).to(FLAGS.device)
@@ -85,10 +87,8 @@ def process(FLAGS, X, action_batch, obj_batch, encoder, decoder, plot_params, ac
         losses['kl_style'].append(style_kl_divergence_loss)
         total_elbo += elbo*1.
 
-        # prepare latents for next pass: create context and disconnect style
+        # prepare latents for next pass: create context
         context = torch.cat([cm,clv],dim=1)
-        #style_mu = style_mu.detach().clone()
-        #style_logvar = style_logvar.detach().clone()
 
         # if plot_params['plot']:
         #     x1 = X[ixs].cpu()
@@ -116,7 +116,6 @@ def single_pass(X,action_batch,cs,context,style_mu,style_logvar,encoder,decoder,
 
     #reparam
     class_latent_embeddings = reparameterize(training=training, mu=class_mu, logvar=class_logvar)   #batch x 4 x 10
-    #class_latent_embeddings = reparameterize(training=True, mu=cm, logvar=clv)
     single_style_latent = reparameterize(training=training, mu=sm, logvar=slv)   #batch x 10
     style_latent_embeddings = reparameterize(training=training, mu=style_mu, logvar=style_logvar)
 
@@ -178,13 +177,6 @@ def training_procedure(FLAGS):
                       paddings = FLAGS.paddings,
                       cos = encoder.cos).to(FLAGS.device)
 
-    #decoder.apply(weights_init)
-
-    # load saved models if load_saved flag is true
-    # if FLAGS.load_saved:
-    #     encoder.load_state_dict(torch.load(os.path.join(savedir, FLAGS.encoder_save)))
-    #     decoder.load_state_dict(torch.load(os.path.join(savedir, FLAGS.decoder_save)))
-
     """
     optimizer definition
     """
@@ -194,19 +186,11 @@ def training_procedure(FLAGS):
         betas=(FLAGS.beta_1, FLAGS.beta_2)
     )
 
-    """
-    training
-    """
-    # load_saved is false when training is started from 0th iteration
-    # if not FLAGS.load_saved:
-    #     with open(FLAGS.log_file, 'w') as log:
-    #         log.write('Epoch\tIteration\tReconstruction_loss\tStyle_KL_divergence_loss\tClass_KL_divergence_loss\n')
-
     print('Loading ball EP dataset...')
-    ds_train = tactile_explorations(train=True)
-    ds_val = tactile_explorations(train=True)
+    ds_train = tactile_explorations(train=True,dataset=FLAGS.dataset)
+    ds_val = tactile_explorations(train=True,dataset=FLAGS.dataset)
     # Creating data indices for training and validation splits:
-    train_indices, val_indices = split_indices(ds_train,4,'new')
+    train_indices, val_indices = split_indices(ds_train,6,FLAGS.dataset)
 
     #set indices in datasets, compute and apply normalizations
     ds_train.set_indices(train_indices)
@@ -236,15 +220,17 @@ def training_procedure(FLAGS):
             "context KL style": ["Multiline", ["vs1", "vs2", "vs3", "vs4"]],
         },
     }
-    writer = SummaryWriter()
+    writer = SummaryWriter(comment=FLAGS.save_dir_id)
     writer.add_custom_scalars(layout)
     FLAGS.logdir=writer.logdir
 
-    with open(f'{FLAGS.logdir}/../run_tracker.xlsx', mode='a+',newline='') as tracking_file:
-        meta_track = csv.DictWriter(tracking_file, fieldnames=['Output_folder',*vars(FLAGS).keys()])
-        if len(open(f'{FLAGS.logdir}/../run_tracker.xlsx', 'r').readlines())<=1:
+
+    with open(f'{FLAGS.logdir}/../run_tracker.csv', mode='a+',newline='') as tracking_file:
+        meta_track = csv.DictWriter(tracking_file,fieldnames=['Output_folder',*vars(FLAGS).keys()])
+        if len(open(f'{FLAGS.logdir}/../run_tracker.csv', 'r').readlines())<=1:
             meta_track.writeheader()
-        meta_track.writerow({'Output_folder':FLAGS.logdir.split('/')[-1],**vars(FLAGS)})
+        hlink = f'=HYPERLINK("/home/richardson/cluster/robot_haptic_perception/{FLAGS.logdir}")'
+        meta_track.writerow({'Output_folder':hlink,**vars(FLAGS)})
     with open(f'{writer.logdir}/config.yaml', 'w') as conf_file:
         yaml.dump(FLAGS, conf_file)
     savedir = f'{writer.logdir}/checkpoints_{FLAGS.batch_size}'
@@ -272,10 +258,9 @@ def training_procedure(FLAGS):
             auto_encoder_optimizer.zero_grad()
             X = data_batch.to(FLAGS.device).detach().clone()
 
-
             ps=False
-            if ((epoch+1) % 50 == 0) and ((it+1)%len(loader)==0):
-                ps=True
+            if (((epoch+1) in [1,50,250,1000]) and ((it+1)%len(loader)==0)):
+                 ps=True
             plot_param = {'plot':ps, 'epoch':epoch,
                           'cols':ds_train.col_order}
             elbo, component_loss = process(FLAGS, X, action_batch, obj_batch,
@@ -305,19 +290,13 @@ def training_procedure(FLAGS):
         if (epoch + 1) % 5 == 0 or (epoch + 1) == FLAGS.end_epoch:
             elbo,te1,te2,te3,te4=eval(FLAGS, val_loader, encoder, decoder)
             monitor[epoch]=elbo
-            torch.save(encoder.state_dict(), os.path.join(savedir, FLAGS.encoder_save +'_e%d'%epoch))
-            torch.save(decoder.state_dict(), os.path.join(savedir, FLAGS.decoder_save +'_e%d'%epoch))
-
             writer.add_scalar('Validation loss/summed elbo', elbo ,epoch)
             for i in range(len(term1_epoch)):
                 writer.add_scalar(f've{i+1}',te1[i],epoch)
                 writer.add_scalar(f'vr{i+1}',te2[i],epoch)
                 writer.add_scalar(f'vc{i+1}',te3[i]/(it + 1),epoch)
                 writer.add_scalar(f'vs{i+1}',te4[i]/(it + 1),epoch)
-        #     print("VAL elbo %.2f" % (monitor[epoch,0]))
-        #     print("VAL Rec. Proba %.2f" % (monitor[epoch,1]))
-        #     print("VAL KL style %.2f" % (monitor[epoch,2]))
-        #     print("VAL KL content %.2f" % (monitor[epoch,3]))
-        #     print("VAL KL action %.2f" % (monitor[epoch,4]))
 
             torch.save(monitor, os.path.join(savedir, 'monitor_e%d'%epoch))
+            torch.save(encoder.state_dict(), os.path.join(savedir, FLAGS.encoder_save +'_e%d'%epoch))
+            torch.save(decoder.state_dict(), os.path.join(savedir, FLAGS.decoder_save +'_e%d'%epoch))
