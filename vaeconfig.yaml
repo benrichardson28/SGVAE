@@ -1,0 +1,38 @@
+# general parameters
+data_path: "/fast/richardson/robot_grasp_data/"
+save_path: "/home/richardson/run"
+encoder_save: "/home/richardson/run"
+decoder_save: "/home/richardson/run"
+cuda: True
+
+# dataset
+dataset: 'all'
+
+# training parameters
+load_saved: 
+start_epoch: 0
+end_epoch: 1000
+batch_size: 32
+
+# adam optimizer parameters
+initial_learning_rate: 0.001
+beta_1: 0.9
+beta_2: 0.999
+
+# model architecture parameters 
+# (set style=0 for classic VAE)
+class_dim: 10
+style_dim: 10
+in_channels: 195
+hidden_dims: [128, 64, 64, 32]
+kernels: [6, 6, 5, 4]
+strides: [4, 4, 2, 2]
+paddings: [1, 1, 1, 0]
+
+# loss parameters
+class_coef: 1.0
+style_coef: 1.0
+beta_VAE: 0.1
+reduction: 'mean'
+beta_NLL: 1.0
+weight_style:
