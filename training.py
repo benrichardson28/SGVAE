@@ -220,7 +220,7 @@ def training_procedure(FLAGS):
             "context KL style": ["Multiline", ["vs1", "vs2", "vs3", "vs4"]],
         },
     }
-    writer = SummaryWriter(comment=FLAGS.save_dir_id)
+    writer = SummaryWriter(comment=FLAGS.save_path)
     writer.add_custom_scalars(layout)
     FLAGS.logdir=writer.logdir
 
