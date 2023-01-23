@@ -5,7 +5,7 @@ Created on Mon Apr  4 14:09:21 2022
 
 @author: richardson
 """
-
+import os.path
 import random
 import torch
 from torch.utils.data import Dataset
@@ -18,14 +18,14 @@ from property_maps import property_df,get_num_classes
 
 
 class tactile_explorations(Dataset):
-    def __init__(self, train=True, transform=None, dataset='all',action_select=None):
+    def __init__(self, FLAGS, train=True, dataset='all',action_select=None):
         ds = 'train_df' if train else 'test_df'
         if dataset=='objects':
             ds = ds+'_objs'
         if dataset=='new':
             ds = ds+'_newobjs'
-        path2data = f'data/{ds}'
-        df = pd.read_pickle(path2data)
+        #path2data = f'data/{ds}'
+        df = pd.read_pickle(os.path.join(FLAGS.data_path,ds))
 
         if action_select is not None:
             df = df[df['action']==action_select]
@@ -40,6 +40,8 @@ class tactile_explorations(Dataset):
         self.one_hot_action = torch.zeros(len(self.df),len(self.act_list))
         for i,act in enumerate(self.act_list):
             self.one_hot_action[(self.df['action']==act).values,i]=1.0
+
+        self.repeats = FLAGS.action_repetitions
         # if transform=='compute':
         #     self.transform = compute_transform(self.df)
         #     self.data = self.apply_transform()
@@ -101,10 +103,9 @@ class tactile_explorations(Dataset):
             self.transform = transform
         self.data = self.apply_transform()
 
-
     def random_context_sampler(self):
         df = self.df
-        self.context_ixs=torch.zeros(df.shape[0],3,dtype=torch.long)
+        self.context_ixs=torch.zeros(df.shape[0],4*self.repeats-1,dtype=torch.long)
         for obj in df['object'].unique():
             tdf = df[(df['object'] == obj)]
 
@@ -116,12 +117,15 @@ class tactile_explorations(Dataset):
                 act1ix = act_dict[act_1]
                 cnt=0
                 for act_x in act_dict.keys():
-                    if act_x==act_1:
-                        continue
-                    sample_ixs = random.SystemRandom().choices(act_dict[act_x],k=len(act1ix))
-                    sample_ixs = torch.tensor(sample_ixs)
-                    self.context_ixs[act1ix,cnt]=sample_ixs
-                    cnt+=1
+                    samp_num = self.repeats
+                    if act_x==act_1: samp_num -= 1 
+                    for _ in range(samp_num):
+                        sample_ixs = random.SystemRandom().choices(act_dict[act_x],
+                                                                k=len(act1ix))
+                        sample_ixs = torch.tensor(sample_ixs)
+                        self.context_ixs[act1ix,cnt]=sample_ixs
+                        cnt+=1
+
 
     def remove_context(self):
         self.context_ixs = None
@@ -265,3 +269,5 @@ class latent_representations(Dataset):
     #     else:
     #         self.transform = transform
     #     self.data = self.apply_transform()
+
+
