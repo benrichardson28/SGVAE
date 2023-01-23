@@ -15,7 +15,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from networks import Encoder, Decoder, Property_model
 from utils import weights_init, reparameterize, setup_models, cNs_init
-from ball_datasets import tactile_explorations,split_indices,latent_representations
+from dataset_structs import tactile_explorations,split_indices,latent_representations
 import training
 from property_maps import property_df,get_num_classes
 import pandas as pd
