@@ -7,7 +7,7 @@ Created on Thu May 12 14:15:17 2022
 """
 
 import matplotlib.pyplot as plt
-import ball_datasets as bd
+import dataset_structs as bd
 import multiprocessing as mp
 import numpy as np
 import torch
