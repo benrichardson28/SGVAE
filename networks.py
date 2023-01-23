@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 
 class Encoder(nn.Module):
-    def __init__(self, style_dim, class_dim,**kwargs):
+    def __init__(self, style_dim, content_dim,**kwargs):
         super(Encoder, self).__init__()
 
         in_channels = kwargs['in_channels']
@@ -23,7 +23,7 @@ class Encoder(nn.Module):
             cos = 1+int((cos-k+2*p)/s)
         self.conv = nn.Sequential(*modules)
         self.cos = cos
-        in_features = kwargs['hidden_dims'][-1]*cos + 2*class_dim
+        in_features = kwargs['hidden_dims'][-1]*cos + 2*content_dim
         mlp_sz = 100
         self.lin1 = nn.Sequential(nn.Linear(in_features=in_features, out_features=mlp_sz, bias=True),
                                   nn.LeakyReLU())
@@ -33,8 +33,8 @@ class Encoder(nn.Module):
         self.style_logvar = nn.Linear(in_features=mlp_sz, out_features=style_dim, bias=True)
 
         # class
-        self.class_mu = nn.Linear(in_features=mlp_sz, out_features=class_dim, bias=True)
-        self.class_logvar = nn.Linear(in_features=mlp_sz, out_features=class_dim, bias=True)
+        self.content_mu = nn.Linear(in_features=mlp_sz, out_features=content_dim, bias=True)
+        self.content_logvar = nn.Linear(in_features=mlp_sz, out_features=content_dim, bias=True)
 
     def forward(self, x, context=None):
         x = self.conv(x)
@@ -45,15 +45,15 @@ class Encoder(nn.Module):
         style_latent_space_mu = self.style_mu(x)
         style_latent_space_logvar = self.style_logvar(x)
 
-        class_latent_space_mu = self.class_mu(x)
-        class_latent_space_logvar = self.class_logvar(x)
+        content_latent_space_mu = self.content_mu(x)
+        content_latent_space_logvar = self.content_logvar(x)
 
         return style_latent_space_mu, style_latent_space_logvar, \
-                class_latent_space_mu, class_latent_space_logvar
+                content_latent_space_mu, content_latent_space_logvar
 
 
 class Decoder(nn.Module):
-    def __init__(self, style_dim, class_dim, **kwargs):
+    def __init__(self, style_dim, content_dim, **kwargs):
         super(Decoder, self).__init__()
 
         modules = []
@@ -62,9 +62,9 @@ class Decoder(nn.Module):
         strides = kwargs['strides'].copy()
         pads = kwargs['paddings'].copy()
         self.cos = kwargs['cos']
-        # self.decoder_input = nn.Linear(style_dim + class_dim + action_dim, hidden_dims[-1] * 4)
+        # self.decoder_input = nn.Linear(style_dim + content_dim + action_dim, hidden_dims[-1] * 4)
         self.decoder_input = nn.Sequential(
-            nn.Linear(style_dim + class_dim + 4, 100),
+            nn.Linear(style_dim + content_dim + 4, 100),
             nn.LeakyReLU(),
             nn.Linear(100, hidden_dims[-1] * self.cos))
         hidden_dims.reverse()
@@ -102,9 +102,9 @@ class Decoder(nn.Module):
         self.final_layer_mu = create_last_layer()
         self.final_layer_var = create_last_layer()
 
-    def forward(self, style_latent_space, class_latent_space, action):
-        x = torch.cat((style_latent_space,class_latent_space, action), dim=-1) # was dim=2 when crops are kept together
-        #x = torch.cat((style_latent_space,class_latent_space), dim=-1)
+    def forward(self, style_latent_space, content_latent_space, action):
+        x = torch.cat((style_latent_space,content_latent_space, action), dim=-1) # was dim=2 when crops are kept together
+        #x = torch.cat((style_latent_space,content_latent_space), dim=-1)
         ds = x.shape
         x = self.decoder_input(x)
         x = x.view(-1, self.inner_size, self.cos)
