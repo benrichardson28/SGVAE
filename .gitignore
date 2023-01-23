@@ -3,3 +3,5 @@ __pycache__/*
 *runs/*
 *_results/*
 data/*
+wandb/*
+.vscode/*
