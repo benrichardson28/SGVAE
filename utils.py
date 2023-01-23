@@ -1,8 +1,9 @@
 import os
-import yaml
 from argparse import Namespace
+import copy
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from mpl_toolkits.axes_grid1 import ImageGrid
@@ -11,14 +12,16 @@ import pdb
 import numpy as np
 from torchvision import datasets
 from networks import Encoder,Decoder
+from dataset_structs import tactile_explorations,split_indices
+import json
 
-def setup_models(run_folder):
-    config_file = f'{run_folder}/config.yaml'
-    with open(config_file, 'r') as file:
-        FLAGS = yaml.load(file,Loader=yaml.UnsafeLoader)
-    if type(FLAGS) is dict:
-        FLAGS = Namespace(**FLAGS)
-    if 'logp_weight' not in FLAGS: setattr(FLAGS,'logp_weight',0)
+def create_vae_models(FLAGS):#run_folder):
+    # config_file = f'{run_folder}/config.yaml'
+    # with open(config_file, 'r') as file:
+    #     FLAGS = yaml.load(file,Loader=yaml.UnsafeLoader)
+    # if type(FLAGS) is dict:
+    #     FLAGS = Namespace(**FLAGS)
+    # if 'logp_weight' not in FLAGS: setattr(FLAGS,'logp_weight',0)
     # if FLAGS.hidden_dims[0]!=128:
     #     FLAGS.hidden_dims.reverse()
     #     FLAGS.kernels.reverse()
@@ -28,49 +31,84 @@ def setup_models(run_folder):
     """
     model definitions
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    encoder = Encoder(style_dim=FLAGS.style_dim, class_dim=FLAGS.class_dim,
+    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    encoder = Encoder(style_dim=FLAGS.style_dim, 
+                      content_dim=FLAGS.content_dim,
                       in_channels = FLAGS.in_channels,
                       hidden_dims = FLAGS.hidden_dims,
                       kernels = FLAGS.kernels,
                       strides = FLAGS.strides,
-                      paddings = FLAGS.paddings).to(FLAGS.device)
+                      paddings = FLAGS.paddings)#.to(FLAGS.device)
     #encoder.apply(weights_init)
-    decoder = Decoder(style_dim=FLAGS.style_dim, class_dim=FLAGS.class_dim,
+    decoder = Decoder(style_dim=FLAGS.style_dim, 
+                      content_dim=FLAGS.content_dim,
                       hidden_dims = FLAGS.hidden_dims,
                       out_channels = FLAGS.in_channels,
                       kernels = FLAGS.kernels,
                       strides = FLAGS.strides,
                       paddings = FLAGS.paddings,
-                      cos = encoder.cos).to(FLAGS.device)
+                      cos = encoder.cos)#.to(FLAGS.device)
 
-    folder = f'{run_folder}/checkpoints_{FLAGS.batch_size}'
 
-    #monitor = torch.load(os.path.join(folder, 'monitor_e%d'%(FLAGS.end_epoch -1)))
+    # if FLAGS.load_checkpoint is not None:
+    #     folder = f'{FLAGS.load_checkpoint}/checkpoint_{FLAGS.batch_size}'
+    #     encoder, decoder 
+    
 
-    #monitor[0,0] =  - np.inf
-    #best_elbo = monitor[checks,0].argmax()
+    # #monitor = torch.load(os.path.join(folder, 'monitor_e%d'%(FLAGS.end_epoch -1)))
 
-    #DEBUG
-    best_elbo=-1
-    mx=0
-    for rn in os.listdir(folder):
-        mx = max(mx,int(''.join(filter(lambda i: i.isdigit(), rn[-5:]))))
-    #mx=199
-    #print(checks[best_elbo],monitor[checks[best_elbo],0],monitor[checks,0].max(), best_elbo)
-    FLAGS.encoder_save = folder + '/encoder_e%d' % mx #checks[best_elbo]
-    FLAGS.decoder_save = folder + '/decoder_e%d' % mx #checks[best_elbo]
+    # #monitor[0,0] =  - np.inf
+    # #best_elbo = monitor[checks,0].argmax()
 
-    #FLAGS.batch_size = 256    #the first use is to load the file
-    encoder.load_state_dict(torch.load(FLAGS.encoder_save, map_location=lambda storage, loc: storage))
-    decoder.load_state_dict(torch.load(FLAGS.decoder_save, map_location=lambda storage, loc: storage))
+    # #DEBUG
+    # best_elbo=-1
+    # mx=0
+    # for rn in os.listdir(folder):
+    #     mx = max(mx,int(''.join(filter(lambda i: i.isdigit(), rn[-5:]))))
+    # #mx=199
+    # #print(checks[best_elbo],monitor[checks[best_elbo],0],monitor[checks,0].max(), best_elbo)
+    # FLAGS.encoder_save = folder + '/encoder_e%d' % mx #checks[best_elbo]
+    # FLAGS.decoder_save = folder + '/decoder_e%d' % mx #checks[best_elbo]
 
-    encoder.eval()
-    decoder.eval()
-    encoder.to(device)
-    decoder.to(device)
+    # #FLAGS.batch_size = 256    #the first use is to load the file
+    # encoder.load_state_dict(torch.load(FLAGS.encoder_save, map_location=lambda storage, loc: storage))
+    # decoder.load_state_dict(torch.load(FLAGS.decoder_save, map_location=lambda storage, loc: storage))
 
-    return encoder,decoder,FLAGS,device
+    # encoder.eval()
+    # decoder.eval()
+    # encoder.to(device)
+    # decoder.to(device)
+
+    return encoder,decoder #,FLAGS,device
+
+def create_vae_optimizer(FLAGS,encoder,decoder):
+    optimizer = optim.Adam(
+        list(encoder.parameters()) + list(decoder.parameters()),
+        lr=FLAGS.initial_learning_rate,
+        betas=(FLAGS.beta_1, FLAGS.beta_2)
+    )
+    return optimizer
+
+def create_vae_scheduler():
+    return NotImplementedError
+
+def create_vae_training_datasets(FLAGS,indices=None):
+    train_set = tactile_explorations(FLAGS,train=True,
+                                     dataset=FLAGS.dataset)
+    # validation_set = tactile_explorations(FLAGS.data_path,train=True,
+    #                                       dataset=FLAGS.dataset)
+    validation_set = copy.deepcopy(train_set)
+    if indices is None:
+        train_indices, val_indices = split_indices(train_set,
+                                                   FLAGS.split_ratio,
+                                                   FLAGS.dataset)
+    else:
+        train_indices, val_indices = indices
+    train_set.set_indices(train_indices)
+    train_set.set_transform()
+    validation_set.set_indices(val_indices)
+    validation_set.set_transform(train_set.get_transform())
+    return train_set, validation_set, [train_indices,val_indices]
 
 def cNs_init(batch_size,act_num,c_size,s_size,device):
     context = torch.cat([torch.zeros(batch_size,c_size),
@@ -224,3 +262,32 @@ def imshow_grid(images, shape=[2, 8], name='default', save=False):
         plt.clf()
     else:
         plt.show()
+
+
+def save_vae_checkpoint(folder,epoch,encoder,decoder,
+                        optimizer=None,scheduler=None):
+    checkpoint = { 
+        'epoch': epoch,
+        'encoder': encoder.state_dict(),
+        'decoder': decoder.state_dict(),
+        'optimizer': optimizer.state_dict() if optimizer is not None else None,
+        'lr_sched': scheduler.state_dict() if scheduler is not None else None}
+        #'loss_logger': loss_logger}
+    torch.save(checkpoint, os.path.join(folder,f'checkpoint_{epoch}.pth'))
+
+def load_vae_checkpoint(folder,epoch,encoder,decoder,
+                        optimizer=None,scheduler=None):
+    filename = os.path.join(folder,'checkpoint',f'checkpoint_{epoch}.pth')
+    if os.path.isfile(filename):
+        checkpoint = torch.load(filename, map_location='cpu')
+        start_epoch = checkpoint['epoch']
+        encoder.load_state_dict(checkpoint['encoder'])
+        decoder.load_state_dict(checkpoint['decoder'])
+        if optimizer:
+            optimizer.load_state_dict(checkpoint['optimizer'])
+        if scheduler:
+            scheduler.load_state_dict(checkpoint['scheduler'])
+        #loss_logger = checkpoint(['loss_logger'])
+    with open(os.path.join(folder,'split_indices.json')) as f:
+        indices = json.load(f)
+    return encoder, decoder, optimizer, scheduler, indices
