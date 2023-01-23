@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from ball_datasets import full_classification,split_indices
+from dataset_structs import full_classification,split_indices
 from tensorboardX import SummaryWriter
 
 import pdb
