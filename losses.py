@@ -24,7 +24,7 @@ class vae_loss_logger():
         self.kl_style[iter_ix] += kls.detach().cpu()
 
     def finalize_epoch_loss(self,count):
-        self.total_loss /= (self.iterations/4)
+        self.total_loss /= self.iterations
         self.total_loss /= count
         self.elbo /= count
         self.mle /= count

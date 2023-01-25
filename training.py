@@ -45,7 +45,8 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
         logp_batch = torch.sum(logl * weight, axis=-1).sum(-1)
         if style_weights is not None:
             logp_batch *= style_weights
-        reconstruction_proba = logp_batch.sum(-1).mean()
+        reconstruction_proba = logp_batch.mean(-1).mean()
+    #reconstruction_proba /= (FLAGS.action_repetitions * 4)
 
     total_kl = FLAGS.style_coef*style_kl_divergence_loss + FLAGS.content_coef*content_kl_divergence_loss
     elbo = (reconstruction_proba - FLAGS.beta_VAE * total_kl)
@@ -76,14 +77,13 @@ def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
 
         elbo, mle, kl_style, \
             kl_content = loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights)
-        #pdb.set_trace()
         total_elbo += elbo*1.
         loss_logger.update_epoch_loss(elbo,mle,kl_content,kl_style,cs)
 
         # prepare latents for next pass: create context
         context = torch.cat([cm,clv],dim=1)
 
-    return total_elbo / FLAGS.action_repetitions
+    return total_elbo / (FLAGS.action_repetitions*4)
 
 def single_pass(X,action_batch,cs,context,style_mu,style_logvar,encoder,decoder,training=True):
     #style vars should be updated outside the function
