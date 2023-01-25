@@ -1,90 +1,160 @@
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=5 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.1 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.01 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.00033 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
---style_coef=10 --style_dim=10 --class_dim=10 --beta_VAE=.0001 --beta_nll=0.5
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=5 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=10 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=1 --style_coef=15 --beta_VAE=.01 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=5 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=10 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_coef=15 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=1 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.0033 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0
+--action_repetitions=2 --style_dim=0 --content_dim=20 --beta_VAE=.001 --beta_NLL=1.0

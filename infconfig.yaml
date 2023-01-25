@@ -1,0 +1,21 @@
+# general parameters
+vae_model_path: "/home/richardson/SGVAE/runs/13095188-0"
+vae_checkpoint: 999
+save_path: ''
+device: 'gpu'
+
+# dataset
+repetitions: 5
+test_properties: 
+action_select:
+
+# training parameters
+end_epoch: 1000
+batch_size: 32
+
+# adam optimizer parameters
+initial_learning_rate: 0.001
+beta_1: 0.9
+beta_2: 0.999
+weight_decay: 1.0
+

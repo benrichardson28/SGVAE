@@ -120,15 +120,13 @@ class Property_model(nn.Module):
         super(Property_model, self).__init__()
 
         self.fc_model = nn.Sequential(
-            nn.Linear(in_features=z_dim, out_features=50, bias=True),
-            # ('fc_1_bn', nn.BatchNorm1d(num_features=10)),
+            nn.Linear(in_features=z_dim, out_features=80, bias=True),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
-
-            # ('fc_2', nn.Linear(in_features=30, out_features=256, bias=True)),
-            # ('fc_2_bn', nn.BatchNorm1d(num_features=256)),
-            # ('LeakyRelu_2', nn.LeakyReLU(negative_slope=0.2, inplace=True)),
-
-            nn.Linear(in_features=50, out_features=num_classes, bias=True)
+            nn.Linear(in_features=80, out_features=80, bias=True),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            nn.Linear(in_features=80, out_features=40, bias=True),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            nn.Linear(in_features=40, out_features=num_classes, bias=True)
         )
         self.num_classes = num_classes
 

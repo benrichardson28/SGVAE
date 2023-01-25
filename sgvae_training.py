@@ -54,7 +54,7 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
     return elbo, reconstruction_proba, style_kl_divergence_loss, content_kl_divergence_loss
 
 def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
-    context, style_mu, style_logvar = utils.cNs_init(FLAGS)
+    context, style_mu, style_logvar = utils.cNs_init(FLAGS,X.shape[0])
     X = X.to(FLAGS.device)
     action_batch=action_batch.to(FLAGS.device)
 
@@ -90,6 +90,9 @@ def single_pass(X,action_batch,cs,context,style_mu,style_logvar,encoder,decoder,
     content_mu = cm.unsqueeze(1).repeat([1,X.size(1),1])
     content_logvar = clv.unsqueeze(1).repeat([1,X.size(1),1])
 
+    if decoder is None:
+        return sm,slv,cm,clv
+    
     #reparam
     content_latent_embeddings = reparameterize(training=training, mu=content_mu, logvar=content_logvar)   #batch x 4 x 10
     single_style_latent = reparameterize(training=training, mu=sm, logvar=slv)   #batch x 10

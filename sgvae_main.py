@@ -7,7 +7,7 @@ import json
 import torch
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
-import training as trl
+import sgvae_training as trl
 import utils
 import losses
 import wandb
@@ -39,7 +39,7 @@ def main(config):
     
     # datasets
     print('Creating datasets.')
-    training_set, validation_set, indices = utils.create_vae_training_datasets(config,indices)
+    training_set, validation_set, indices, _ = utils.create_vae_datasets(config,indices)
 
     # dataloaders
     kwargs = {'num_workers': 1, 'pin_memory': True}

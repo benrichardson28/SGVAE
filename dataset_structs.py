@@ -216,45 +216,70 @@ class full_classification(tactile_explorations):
 
 
 class latent_representations(Dataset):
-    def __init__(self, dataframe,props):
-        labels_df = props.loc[dataframe['object'].values]
-        self.data = pd.concat([dataframe.reset_index(),labels_df.reset_index()],axis=1,ignore_index=False)
-        self.action_list = np.unique(self.data['actions'].iloc[0])
-        self.ltnt_type = 'c'
-        self.label = 'sq_size'
+    def __init__(self, FLAGS):
+        sequence_len = FLAGS.action_repetitions*4
+        self.style = (FLAGS.style_dim > 0)
+        self.property_values = property_df()
+        columns = [f'content {i}' for i in range(sequence_len)]
+        if self.style:
+            columns.extend(f'style {i}' for i in range(sequence_len))
+        columns.extend(f'action {i}' for i in range(sequence_len))
+        columns.extend(['object'])
+        columns.extend(col for col in self.property_values.columns)
+        self.data = pd.DataFrame(columns=columns).astype(object)
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, index):
         row = self.data.iloc[index]
-        if self.ltnt_type=='c':
-            feats = row['cm']
-        elif self.ltnt_type=='s':
-            feats = row['sm']
 
-        ball_ids = row['ball_id']
+        feats = row[f'{self.ltnt_type} {self.iter}']
+        ball_ids = row['object']
+        
         if 'contents' in self.label:
             labels = row[f'{self.label}_label']
         else:
             labels = row[self.label]
 
-        actions = np.array([np.where(a==self.action_list)[0].item() for a in row['actions']])
+        actions = np.array([np.where(a==self.action_list)[0].item() for a in row[f'action {iter}']])
 
         return feats,actions,ball_ids,labels
 
+    def start_row(self,obj):
+        self.row = pd.DataFrame(columns=self.data.columns)
+        self.row['object'] = obj
+        self.row[self.property_values.columns] = self.property_values.loc[obj].values
+
+    def add_to_row(self,cont,styl,act,ix):
+        self.row[f'content {ix}'] = torch.tensor_split(cont,cont.shape[0])
+        if self.style:
+            self.row[f'style {ix}'] = torch.tensor_split(styl,styl.shape[0])
+        self.row[f'action {ix}'] = act
+
+    def append_row(self):
+        self.data = self.data.append(self.row,ignore_index=True)
+
     def set_lbl(self,label):
-        if label not in ['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','contents_binary','ball_id']:
-            raise ValueError(f"Must be in {['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','contents_binary','ball_id']}.")
+        if label not in self.property_values.columns[1:]:
+            raise ValueError(f"Must be in {self.property_values.columns[1:]}.")
         self.label = label
 
-    def set_classifier(self,ltnt_type):
-        if ltnt_type not in ['c','s']:
-            raise ValueError('Must be "c" or "s".')
+    def set_latent(self,ltnt_type):
+        if ltnt_type not in ['content','style']:
+            raise ValueError('Must be "content" or "style".')
         self.ltnt_type = ltnt_type
+    
+    def set_iteration(self,iter):
+        self.iter = iter
 
     def get_class_cnt(self):
         return get_num_classes(self.label,property_df())
+    
+
+
+    def get_cols(self):
+        return self.data.columns
 
     # def apply_transform(self):
 

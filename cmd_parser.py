@@ -62,3 +62,35 @@ def parse_vae_config(argv=None):
     args = parser.parse_args(argv)
 
     return args
+
+def parse_inference_config(argv=None):
+    arg_formatter = configargparse.ArgumentDefaultsHelpFormatter
+
+    cfg_parser = configargparse.YAMLConfigFileParser
+    description = 'PyTorch implementation of surface-perception learning model'
+    parser = configargparse.ArgParser(formatter_class=arg_formatter,
+                                      config_file_parser_class=cfg_parser,
+                                      description=description)
+    parser.add_argument('-c', '--config', required=True,
+                        is_config_file=True,
+                        help='config file')
+    
+    parser.add_argument('--device',type=str, default='gpu',choices=['gpu','cpu'])
+    parser.add_argument('--save_path', type=str, default=0)
+    parser.add_argument('--vae_model_path', type=str)
+    parser.add_argument('--vae_checkpoint', type=int)
+    parser.add_argument('--batch_size', type=float, default=32)
+    parser.add_argument('--end_epoch', type=int, default=1, help="flag to indicate the final epoch of training")
+
+    parser.add_argument('--initial_learning_rate', type=float, default=0.001)
+    parser.add_argument('--beta_1', type=float, default=0.9, help="default beta_1 val for adam")
+    parser.add_argument('--beta_2', type=float, default=0.999, help="default beta_2 val for adam")
+    parser.add_argument('--weight_decay', type=float, default=1, help="weight decay for adam")
+    
+    parser.add_argument('--repetitions',type=int, default=5, help="How many random random sequences to generate for training")
+    parser.add_argument('--test_properties', type=str, nargs='*', default=['height','width','stiffness','mass','contents_binary'])
+    parser.add_argument('--action_select', type=str, default=None, choices=['squeeze', 'press', 'shake', 'slide'])
+
+    args = parser.parse_args(argv)
+
+    return args

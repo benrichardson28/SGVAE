@@ -216,15 +216,15 @@ def property_df():
 
 
 
-# def get_num_classes(label,properties):
-#     # if label == 'contents_fine':
-#     #     cnt = properties['contents_fine_label'].unique().shape[0]
-#     # elif label == 'contents_rough':
-#     #     cnt = properties['contents_rough_label'].unique().shape[0]
-#     # elif label == 'contents_binary':
-#     #     cnt = properties['contents_binary_label'].unique().shape[0]
-#     # elif label in ['width','height','mass','stiffness']:
-#     #     cnt = properties[f'{label}_cluster_label'].unique().shape[0]
-#     # else:
-#     cnt = properties['ball_id'].unique().shape[0]
-#     return cnt
+def get_num_classes(label,properties):
+    if label == 'contents_fine':
+        cnt = properties['contents_fine_label'].unique().shape[0]
+    elif label == 'contents_rough':
+        cnt = properties['contents_rough_label'].unique().shape[0]
+    elif label == 'contents_binary':
+        cnt = properties['contents_binary_label'].unique().shape[0]
+    elif label in ['width','height','mass','stiffness']:
+        cnt = properties[f'{label}_cluster_label'].unique().shape[0]
+    else:
+        cnt = properties['ball_id'].unique().shape[0]
+    return cnt

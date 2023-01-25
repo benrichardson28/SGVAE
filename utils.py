@@ -12,7 +12,7 @@ import pdb
 import numpy as np
 from torchvision import datasets
 from networks import Encoder,Decoder
-from dataset_structs import tactile_explorations,split_indices
+import dataset_structs as dst
 import json
 
 def create_vae_models(FLAGS):
@@ -51,15 +51,15 @@ def create_vae_scheduler():
     return NotImplementedError
 
 def create_vae_datasets(FLAGS,indices=None,test=False):
-    train_set = tactile_explorations(FLAGS,train=True,
-                                     dataset=FLAGS.dataset)
+    train_set = dst.tactile_explorations(FLAGS,train=True,
+                                         dataset=FLAGS.dataset)
     # validation_set = tactile_explorations(FLAGS.data_path,train=True,
     #                                       dataset=FLAGS.dataset)
     validation_set = copy.deepcopy(train_set)
     if indices is None:
-        train_indices, val_indices = split_indices(train_set,
-                                                   FLAGS.split_ratio,
-                                                   FLAGS.dataset)
+        train_indices, val_indices = dst.split_indices(train_set,
+                                                       FLAGS.split_ratio,
+                                                       FLAGS.dataset)
     else:
         train_indices, val_indices = indices
     train_set.set_indices(train_indices)
@@ -69,18 +69,24 @@ def create_vae_datasets(FLAGS,indices=None,test=False):
 
     test_set = None
     if test:
-        test_set = tactile_explorations(FLAGS,train=False,
-                                        dataset=FLAGS.dataset)
-        test_set.set_transform(train_set.get_transform)
+        test_set = dst.tactile_explorations(FLAGS,train=False,
+                                            dataset=FLAGS.dataset)
+        test_set.set_transform(train_set.get_transform())
 
     return train_set, validation_set, [train_indices,val_indices], test_set
 
-def cNs_init(FLAGS):
+def create_inference_datasets(iters):
+    train_set = dst.latent_representations(iters)
+    validation_set = dst.latent_representations(iters)
+    test_set = dst.latent_representations(iters)
+    return train_set,validation_set,test_set
+
+def cNs_init(FLAGS,size):
     act_num = 4 * FLAGS.action_repetitions
-    context = torch.cat([torch.zeros(FLAGS.batch_size,FLAGS.content_dim),
-                         0.5*torch.ones(FLAGS.batch_size,FLAGS.content_dim)],dim=1).to(FLAGS.device)
-    style_mu = torch.zeros(FLAGS.batch_size,act_num,FLAGS.style_dim).to(FLAGS.device)
-    style_logvar = 0.5*torch.ones(FLAGS.batch_size,act_num,FLAGS.style_dim).to(FLAGS.device)
+    context = torch.cat([torch.zeros(size,FLAGS.content_dim),
+                         0.5*torch.ones(size,FLAGS.content_dim)],dim=1).to(FLAGS.device)
+    style_mu = torch.zeros(size,act_num,FLAGS.style_dim).to(FLAGS.device)
+    style_logvar = 0.5*torch.ones(size,act_num,FLAGS.style_dim).to(FLAGS.device)
     return context, style_mu, style_logvar
 
 def mse_loss(input, target):
