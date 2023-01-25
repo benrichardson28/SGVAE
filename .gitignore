@@ -1,7 +1,8 @@
 __pycache__/*
 *tmp_logs/*
-*runs/*
+*runs*/*
 *_results/*
 data/*
 wandb/*
 .vscode/*
+*test*
