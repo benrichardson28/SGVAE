@@ -15,30 +15,18 @@ from networks import Encoder,Decoder
 from dataset_structs import tactile_explorations,split_indices
 import json
 
-def create_vae_models(FLAGS):#run_folder):
-    # config_file = f'{run_folder}/config.yaml'
-    # with open(config_file, 'r') as file:
-    #     FLAGS = yaml.load(file,Loader=yaml.UnsafeLoader)
-    # if type(FLAGS) is dict:
-    #     FLAGS = Namespace(**FLAGS)
-    # if 'logp_weight' not in FLAGS: setattr(FLAGS,'logp_weight',0)
-    # if FLAGS.hidden_dims[0]!=128:
-    #     FLAGS.hidden_dims.reverse()
-    #     FLAGS.kernels.reverse()
-    #     FLAGS.paddings.reverse()
-    #     FLAGS.strides.reverse()
-
+def create_vae_models(FLAGS):
     """
     model definitions
     """
-    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     encoder = Encoder(style_dim=FLAGS.style_dim, 
                       content_dim=FLAGS.content_dim,
                       in_channels = FLAGS.in_channels,
                       hidden_dims = FLAGS.hidden_dims,
                       kernels = FLAGS.kernels,
                       strides = FLAGS.strides,
-                      paddings = FLAGS.paddings)#.to(FLAGS.device)
+                      paddings = FLAGS.paddings)
     #encoder.apply(weights_init)
     decoder = Decoder(style_dim=FLAGS.style_dim, 
                       content_dim=FLAGS.content_dim,
@@ -47,39 +35,9 @@ def create_vae_models(FLAGS):#run_folder):
                       kernels = FLAGS.kernels,
                       strides = FLAGS.strides,
                       paddings = FLAGS.paddings,
-                      cos = encoder.cos)#.to(FLAGS.device)
-
-
-    # if FLAGS.load_checkpoint is not None:
-    #     folder = f'{FLAGS.load_checkpoint}/checkpoint_{FLAGS.batch_size}'
-    #     encoder, decoder 
-    
-
-    # #monitor = torch.load(os.path.join(folder, 'monitor_e%d'%(FLAGS.end_epoch -1)))
-
-    # #monitor[0,0] =  - np.inf
-    # #best_elbo = monitor[checks,0].argmax()
-
-    # #DEBUG
-    # best_elbo=-1
-    # mx=0
-    # for rn in os.listdir(folder):
-    #     mx = max(mx,int(''.join(filter(lambda i: i.isdigit(), rn[-5:]))))
-    # #mx=199
-    # #print(checks[best_elbo],monitor[checks[best_elbo],0],monitor[checks,0].max(), best_elbo)
-    # FLAGS.encoder_save = folder + '/encoder_e%d' % mx #checks[best_elbo]
-    # FLAGS.decoder_save = folder + '/decoder_e%d' % mx #checks[best_elbo]
-
-    # #FLAGS.batch_size = 256    #the first use is to load the file
-    # encoder.load_state_dict(torch.load(FLAGS.encoder_save, map_location=lambda storage, loc: storage))
-    # decoder.load_state_dict(torch.load(FLAGS.decoder_save, map_location=lambda storage, loc: storage))
-
-    # encoder.eval()
-    # decoder.eval()
-    # encoder.to(device)
-    # decoder.to(device)
-
-    return encoder,decoder #,FLAGS,device
+                      cos = encoder.cos)
+    #decoder.apply(weights_init)
+    return encoder,decoder 
 
 def create_vae_optimizer(FLAGS,encoder,decoder):
     optimizer = optim.Adam(
@@ -92,7 +50,7 @@ def create_vae_optimizer(FLAGS,encoder,decoder):
 def create_vae_scheduler():
     return NotImplementedError
 
-def create_vae_training_datasets(FLAGS,indices=None):
+def create_vae_datasets(FLAGS,indices=None,test=False):
     train_set = tactile_explorations(FLAGS,train=True,
                                      dataset=FLAGS.dataset)
     # validation_set = tactile_explorations(FLAGS.data_path,train=True,
@@ -108,15 +66,21 @@ def create_vae_training_datasets(FLAGS,indices=None):
     train_set.set_transform()
     validation_set.set_indices(val_indices)
     validation_set.set_transform(train_set.get_transform())
-    return train_set, validation_set, [train_indices,val_indices]
 
-def cNs_init(batch_size,act_num,c_size,s_size,device):
-    context = torch.cat([torch.zeros(batch_size,c_size),
-                         torch.ones(batch_size,c_size)/2.0],dim=1).to(device)
+    test_set = None
+    if test:
+        test_set = tactile_explorations(FLAGS,train=False,
+                                        dataset=FLAGS.dataset)
+        test_set.set_transform(train_set.get_transform)
 
-    style_mu = torch.zeros(batch_size,act_num,s_size).to(device)
-    style_logvar = 0.5*torch.ones(batch_size,act_num,s_size).to(device)
+    return train_set, validation_set, [train_indices,val_indices], test_set
 
+def cNs_init(FLAGS):
+    act_num = 4 * FLAGS.action_repetitions
+    context = torch.cat([torch.zeros(FLAGS.batch_size,FLAGS.content_dim),
+                         0.5*torch.ones(FLAGS.batch_size,FLAGS.content_dim)],dim=1).to(FLAGS.device)
+    style_mu = torch.zeros(FLAGS.batch_size,act_num,FLAGS.style_dim).to(FLAGS.device)
+    style_logvar = 0.5*torch.ones(FLAGS.batch_size,act_num,FLAGS.style_dim).to(FLAGS.device)
     return context, style_mu, style_logvar
 
 def mse_loss(input, target):
@@ -220,6 +184,34 @@ def group_wise_reparameterize_each(training, mu, logvar, labels_batch,
 
     return content_samples, indexes, sizes
 
+def save_vae_checkpoint(folder,epoch,encoder,decoder,
+                        optimizer=None,scheduler=None):
+    checkpoint = { 
+        'epoch': epoch,
+        'encoder': encoder.state_dict(),
+        'decoder': decoder.state_dict(),
+        'optimizer': optimizer.state_dict() if optimizer is not None else None,
+        'lr_sched': scheduler.state_dict() if scheduler is not None else None}
+        #'loss_logger': loss_logger}
+    torch.save(checkpoint, os.path.join(folder,f'checkpoint_{epoch}.pth'))
+
+def load_vae_checkpoint(folder,epoch,encoder,decoder,
+                        optimizer=None,scheduler=None):
+    filename = os.path.join(folder,'checkpoint',f'checkpoint_{epoch}.pth')
+    if os.path.isfile(filename):
+        checkpoint = torch.load(filename, map_location='cpu')
+        start_epoch = checkpoint['epoch']
+        encoder.load_state_dict(checkpoint['encoder'])
+        decoder.load_state_dict(checkpoint['decoder'])
+        if optimizer:
+            optimizer.load_state_dict(checkpoint['optimizer'])
+        if scheduler:
+            scheduler.load_state_dict(checkpoint['scheduler'])
+        #loss_logger = checkpoint(['loss_logger'])
+    with open(os.path.join(folder,'split_indices.json')) as f:
+        indices = json.load(f)
+    return encoder, decoder, optimizer, scheduler, indices
+
 def weights_init(layer):
     r"""Apparently in Chainer Lecun normal initialisation was the default one
     """
@@ -262,32 +254,3 @@ def imshow_grid(images, shape=[2, 8], name='default', save=False):
         plt.clf()
     else:
         plt.show()
-
-
-def save_vae_checkpoint(folder,epoch,encoder,decoder,
-                        optimizer=None,scheduler=None):
-    checkpoint = { 
-        'epoch': epoch,
-        'encoder': encoder.state_dict(),
-        'decoder': decoder.state_dict(),
-        'optimizer': optimizer.state_dict() if optimizer is not None else None,
-        'lr_sched': scheduler.state_dict() if scheduler is not None else None}
-        #'loss_logger': loss_logger}
-    torch.save(checkpoint, os.path.join(folder,f'checkpoint_{epoch}.pth'))
-
-def load_vae_checkpoint(folder,epoch,encoder,decoder,
-                        optimizer=None,scheduler=None):
-    filename = os.path.join(folder,'checkpoint',f'checkpoint_{epoch}.pth')
-    if os.path.isfile(filename):
-        checkpoint = torch.load(filename, map_location='cpu')
-        start_epoch = checkpoint['epoch']
-        encoder.load_state_dict(checkpoint['encoder'])
-        decoder.load_state_dict(checkpoint['decoder'])
-        if optimizer:
-            optimizer.load_state_dict(checkpoint['optimizer'])
-        if scheduler:
-            scheduler.load_state_dict(checkpoint['scheduler'])
-        #loss_logger = checkpoint(['loss_logger'])
-    with open(os.path.join(folder,'split_indices.json')) as f:
-        indices = json.load(f)
-    return encoder, decoder, optimizer, scheduler, indices
