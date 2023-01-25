@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 
-def property_df(class_type='cluster'):
+def property_df():
     ballname = {0:'empty',1:'baseball_1',
               2:'red_squishy',3:'blue_green_squishy',4:'golfball_1',
               5:'pingpong_1',6:'purple_spiky',7:'tennis_1',
@@ -34,7 +34,7 @@ def property_df(class_type='cluster'):
               }
 
     #size in m
-    sq_size = {0: 0.000, 1:0.07209, 2:0.101, 3:0.103, 4:0.04275,
+    width = {0: 0.000, 1:0.07209, 2:0.101, 3:0.103, 4:0.04275,
         5:0.0396, 6:0.063, 7:0.0653, 8:0.0643, 9:0.0618,
         10:0.05565, 11:0.0653, 12:0.0498, 13:0.04275, 14:0.05565,
         15:0.0653, 16:0.07209, 17:0.0618, 18:0.0633, 19:0.0618,
@@ -53,7 +53,7 @@ def property_df(class_type='cluster'):
         86:.035, 87:.045, 88:.06, 89:.085, 90:.03,
         95:.03,96:.05,97:.07,}
 
-    pr_size = {0: 0.000, 1:0.07209, 2:0.101, 3:0.103, 4:0.04275,
+    height = {0: 0.000, 1:0.07209, 2:0.101, 3:0.103, 4:0.04275,
         5:0.0396, 6:0.063, 7:0.0653, 8:0.0643, 9:0.0618,
         10:0.05565, 11:0.0653, 12:0.0498, 13:0.04275, 14:0.05565,
         15:0.0653, 16:0.07209, 17:0.0618, 18:0.0633, 19:0.0618,
@@ -74,41 +74,41 @@ def property_df(class_type='cluster'):
         }
 
     #stiffnes mean and variance
-    stiffness = {0:0, 1:20654, 2:527, 3:1463, 4:37888, 5:17579,
-          6:1486, 7:6035, 8:1592, 9:21155, 10:5681,
-          11:7066, 12:7123, 13:37099, 14:5426, 15:5540,
-          16:23024, 17:23694, 18:16330, 19:22026, 20:21952, 21:5674,
-          31:911, 32:1049, 33:763, 34:22129, 35:4585, 36:15455,
-          37:11165, 38:829, 39:5459, 40:6085, 41:853, 42:9304,
-          43:11697, 44:1088, 45:4805, 46:601,
-          51:33637, 52:33238, 53:33108, 54:30926,
-          55:34424, 56:32942, 57:33182, 58:30360,
-          59:34139, 60:33166, 61:32810, 62:31460,
-          63:20496, 64:390,
-          71:18745, 72:924, 73:1038, 74:526 ,75:2998,
-          76:391, 77:3025, 78:4041, 79:39289, 80:40750,
-          81:32312, 82:14340, 83:2195, 84:3917, 85:36638,
-          86:38851, 87:8987, 88:22729, 89:4244, 90:16809,
-          95:39289, 96:40750, 97:36638,
+    stiffness = {0:0.0, 1:20654.0, 2:527.0, 3:1463.0, 4:37888.0, 5:17579.0,
+          6:1486.0, 7:6035.0, 8:1592.0, 9:21155.0, 10:5681.0,
+          11:7066.0, 12:7123.0, 13:37099.0, 14:5426.0, 15:5540.0,
+          16:23024.0, 17:23694.0, 18:16330.0, 19:22026.0, 20:21952.0, 21:5674.0,
+          31:911.0, 32:1049.0, 33:763.0, 34:22129.0, 35:4585.0, 36:15455.0,
+          37:11165.0, 38:829.0, 39:5459.0, 40:6085.0, 41:853.0, 42:9304.0,
+          43:11697.0, 44:1088.0, 45:4805.0, 46:601.0,
+          51:33637.0, 52:33238.0, 53:33108.0, 54:30926.0,
+          55:34424.0, 56:32942.0, 57:33182.0, 58:30360.0,
+          59:34139.0, 60:33166.0, 61:32810.0, 62:31460.0,
+          63:20496.0, 64:390.0,
+          71:18745.0, 72:924.0, 73:1038.0, 74:526.0 ,75:2998.0,
+          76:391.0, 77:3025.0, 78:4041.0, 79:39289.0, 80:40750.0,
+          81:32312.0, 82:14340.0, 83:2195.0, 84:3917.0, 85:36638.0,
+          86:38851.0, 87:8987.0, 88:22729.0, 89:4244.0, 90:16809.0,
+          95:39289.0, 96:40750.0, 97:36638.0,
           }
     #extras: 75 alternate direction - 3558+-54
 
-    st_var = {0:0, 1:904, 2:19, 3:33, 4:2239, 5:920,
-          6:29, 7:281, 8:21, 9:5256, 10:101,
-          11:425, 12:585, 13:1964, 14:122, 15:268,
-          16:1472, 17:4646, 18:624, 19:5611, 20:4275, 21:125,
-          31:8.3, 32:14, 33:13, 34:1243, 35:327, 36:2262,
-          37:1312, 38:15, 39:337, 40:335, 41:11, 42:955,
-          43:1725, 44:13, 45:323, 46:4,
-          51:1676, 52:2288, 53:1945, 54:1303,
-          55:2224, 56:1497 ,57:1420, 58:1764,
-          59:1300, 60:1767, 61:1369 ,62:1813,
-          63:884, 64:4,
-          71:2818, 72:26, 73:20, 74:33, 75:67,
-          83:42, 77:80, 78:112, 79:1823, 80:2666,
-          81:1688, 82:965, 76:23, 84:1062, 85:2166,
-          86:2112, 87:838, 88:2389, 89:312, 90:622,
-          95:1823, 96:2666, 97:2166,
+    stifness_var = {0:0.0, 1:904.0, 2:19.0, 3:33.0, 4:2239.0, 5:920.0,
+          6:29.0, 7:281.0, 8:21.0, 9:5256.0, 10:101.0,
+          11:425.0, 12:585.0, 13:1964.0, 14:122.0, 15:268.0,
+          16:1472.0, 17:4646.0, 18:624.0, 19:5611.0, 20:4275.0, 21:125.0,
+          31:8.3, 32:14.0, 33:13.0, 34:1243.0, 35:327.0, 36:2262.0,
+          37:1312.0, 38:15.0, 39:337.0, 40:335.0, 41:11.0, 42:955.0,
+          43:1725.0, 44:13.0, 45:323.0, 46:4.0,
+          51:1676.0, 52:2288.0, 53:1945.0, 54:1303.0,
+          55:2224.0, 56:1497.0 ,57:1420.0, 58:1764.0,
+          59:1300.0, 60:1767.0, 61:1369.0 ,62:1813.0,
+          63:884.0, 64:4.0,
+          71:2818.0, 72:26.0, 73:20.0, 74:33.0, 75:67.0,
+          83:42.0, 77:80.0, 78:112.0, 79:1823.0, 80:2666.0,
+          81:1688.0, 82:965.0, 76:23.0, 84:1062.0, 85:2166.0,
+          86:2112.0, 87:838.0, 88:2389.0, 89:312.0, 90:622.0,
+          95:1823.0, 96:2666.0, 97:2166.0,
           }
 
 
@@ -136,23 +136,23 @@ def property_df(class_type='cluster'):
 
     #contents
     contents = {0:None,1:None,2:None,3:None,4:None,5:None,
-           6:'loose',7:None,8:None,9:None,10:None,11:None,
-           12:None,13:None,14:None,15:None,16:None,17:None,
-           18:None,19:None,20:None,21:None,
-           31:None,32:None,33:None,34:None,35:None,
-           36:None,37:None,38:None,39:None,40:None,
-           41:None,42:None,43:None,44:None,45:None,46:None,
-           # lower number is less mass of contents
-           51:'salt_4',52:'salt_3',53:'salt_2',54:'salt_1',
-           55:'popcorn_4',56:'popcorn_3',57:'popcorn_2',58:'popcorn_1',
-           59:'rocks_4',60:'rocks_3',61:'rocks_2',62:'rocks_1',
-           63:None,64:'popcorn_4',
-           71:None,72:None,73:None,74:None,75:None,
-           76:None,77:None,78:None,79:None,80:None,
-           81:None,82:'gum',83:None,84:'popcorn',85:None,
-           86:None,87:'paper_clips',88:None,89:None,90:None,
-           95:'bearings', 96:'popcorn', 97:'popcorn'
-           }
+                6:'loose',7:None,8:None,9:None,10:None,11:None,
+                12:None,13:None,14:None,15:None,16:None,17:None,
+                18:None,19:None,20:None,21:None,
+                31:None,32:None,33:None,34:None,35:None,
+                36:None,37:None,38:None,39:None,40:None,
+                41:None,42:None,43:None,44:None,45:None,46:None,
+                # lower number is less mass of contents
+                51:'salt_4',52:'salt_3',53:'salt_2',54:'salt_1',
+                55:'popcorn_4',56:'popcorn_3',57:'popcorn_2',58:'popcorn_1',
+                59:'rocks_4',60:'rocks_3',61:'rocks_2',62:'rocks_1',
+                63:None,64:'popcorn_4',
+                71:None,72:None,73:None,74:None,75:None,
+                76:None,77:None,78:None,79:None,80:None,
+                81:None,82:'gum',83:None,84:'popcorn',85:None,
+                86:None,87:'paper_clips',88:None,89:None,90:None,
+                95:'bearings', 96:'popcorn', 97:'popcorn'
+                }
 
     # def friction(obj_id):
     #     fr = {0:0,1:,2:,3:,4:,5:,6:,7:,8:,9:,10:,11:,
@@ -176,12 +176,12 @@ def property_df(class_type='cluster'):
     #           63:,64:}
     #     return hd[obj_id]
 
-    obj_prop = pd.DataFrame(columns = ['ball_id','ball_name','sq_size','pr_size','stiffness','mass','contents'])
+    obj_prop = pd.DataFrame(columns = ['ball_id','ball_name','width','height','stiffness','mass','contents'])
     for key in ballname.keys():
         obj_prop = obj_prop.append({'ball_id':key,
                                     'ball_name':ballname[key],
-                                    'sq_size':sq_size[key],
-                                    'pr_size':pr_size[key],
+                                    'width':width[key],
+                                    'height':height[key],
                                     'stiffness':stiffness[key],
                                     'mass':mass[key],
                                     'contents':contents[key]},ignore_index=True)
@@ -194,37 +194,37 @@ def property_df(class_type='cluster'):
     obj_prop['contents_binary_label'] = [(i is not None) for i in obj_prop['contents']]
 
     #scaling labels, easy to invert later if necessary
-    for col in ['sq_size','pr_size','stiffness','mass']:
+    for col in ['width','height','stiffness','mass']:
         obj_prop[col] /= obj_prop[col].max()
 
-    if class_type == 'cluster':
-        # do some sort of cluster
-        kmeans = KMeans(
-                init="random",
-                n_clusters=10,
-                n_init=20,
-                max_iter=300,
-                random_state=0
-            )
-        for att in ['sq_size','pr_size','mass','stiffness']:
-            kmeans.fit(obj_prop[att].values.reshape(-1,1))
-            obj_prop[f'{att}_cluster_label'] = kmeans.labels_
-            obj_prop[f'{att}_cluster_mean']=kmeans.cluster_centers_[kmeans.labels_]
-        obj_prop['index_ball']=obj_prop.index
+    # if class_type == 'cluster':
+    #     # do some sort of cluster
+    #     kmeans = KMeans(
+    #             init="random",
+    #             n_clusters=10,
+    #             n_init=20,
+    #             max_iter=300,
+    #             random_state=0
+    #         )
+    #     for att in ['sq_size','pr_size','mass','stiffness']:
+    #         kmeans.fit(obj_prop[att].values.reshape(-1,1))
+    #         obj_prop[f'{att}_cluster_label'] = kmeans.labels_
+    #         obj_prop[f'{att}_cluster_mean']=kmeans.cluster_centers_[kmeans.labels_]
+    #     obj_prop['index_ball']=obj_prop.index
 
     return obj_prop.set_index('ball_id')
 
 
 
-def get_num_classes(label,properties):
-    if label == 'contents_fine':
-        cnt = properties['contents_fine_label'].unique().shape[0]
-    elif label == 'contents_rough':
-        cnt = properties['contents_rough_label'].unique().shape[0]
-    elif label == 'contents_binary':
-        cnt = properties['contents_binary_label'].unique().shape[0]
-    elif label in ['sq_size','pr_size','mass','stiffness']:
-        cnt = properties[f'{label}_cluster_label'].unique().shape[0]
-    else:
-        cnt = properties['ball_id'].unique().shape[0]
-    return cnt
+# def get_num_classes(label,properties):
+#     # if label == 'contents_fine':
+#     #     cnt = properties['contents_fine_label'].unique().shape[0]
+#     # elif label == 'contents_rough':
+#     #     cnt = properties['contents_rough_label'].unique().shape[0]
+#     # elif label == 'contents_binary':
+#     #     cnt = properties['contents_binary_label'].unique().shape[0]
+#     # elif label in ['width','height','mass','stiffness']:
+#     #     cnt = properties[f'{label}_cluster_label'].unique().shape[0]
+#     # else:
+#     cnt = properties['ball_id'].unique().shape[0]
+#     return cnt
