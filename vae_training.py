@@ -54,12 +54,7 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
     return elbo, reconstruction_proba, style_kl_divergence_loss, content_kl_divergence_loss
 
 def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
-    context = torch.cat([torch.zeros(X.size(0),FLAGS.content_dim),
-                         0.5*torch.ones(X.size(0),FLAGS.content_dim)],dim=1).to(FLAGS.device)
-
-    style_mu = torch.zeros(X.size(0),X.size(1),FLAGS.style_dim).to(FLAGS.device)
-    style_logvar = 0.5*torch.ones(X.size(0),X.size(1),FLAGS.style_dim).to(FLAGS.device)
-
+    context, style_mu, style_logvar = utils.cNs_init(FLAGS)
     X = X.to(FLAGS.device)
     action_batch=action_batch.to(FLAGS.device)
 
