@@ -53,7 +53,7 @@ def main(config):
     wandb.init(config=config,project="SGVAE", entity="brichardson",id=wandb_id)
 
     #config.save_path=writer.logdir
-    config.save_path = os.path.join('runs',datetime.now().strftime("%m%d%Y-%H:%M:%S-")+ config.save_path)
+    config.save_path = os.path.join('runs',config.save_path)
     train_loss_logger = losses.vae_loss_logger(config,'Training')
     val_loss_logger = losses.vae_loss_logger(config,'Validation')
 
