@@ -6,3 +6,4 @@ data/*
 wandb/*
 .vscode/*
 *test*
+*.pyc
