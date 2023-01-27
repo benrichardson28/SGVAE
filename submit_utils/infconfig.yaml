@@ -1,0 +1,21 @@
+# general parameters
+vae_model_path: ${VAE_MODEL_PATH}
+vae_checkpoint: 999
+save_path: ${SAVE_PATH}
+device: 'gpu'
+
+# dataset
+repetitions: ${DATA_REPETITIONS}
+test_properties: ${PROPERTIES_TO_TEST}
+action_select: ${ACTIONS_TO_USE}
+
+# training parameters
+end_epoch: ${END_EPOCH}
+batch_size: 32
+
+# adam optimizer parameters
+initial_learning_rate: 0.001
+beta_1: 0.9
+beta_2: 0.999
+weight_decay: ${WEIGHT_DECAY}
+

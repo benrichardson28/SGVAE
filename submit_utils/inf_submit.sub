@@ -1,0 +1,12 @@
+executable = /home/richardson/miniconda3/envs/ball_env/bin/python
+arguments = inference_main.py $(a1)
+error = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-.err
+output = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-.out
+log = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-.log
+request_memory = 20000
+request_cpus = 1
+request_gpus = 1
+requirements = (TARGET.CUDACapability >= 6.0) && (TARGET.CUDACapability <= 7.5) && (TARGET.CUDAGlobalMemoryMb > 10000)
++MaxRunningPrice=100
++RunningPriceExceededAction = "restart"
+queue a1 from submit_utils/inf_args.txt

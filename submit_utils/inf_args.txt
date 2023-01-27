@@ -1,0 +1,1 @@
+-c /home/richardson/cluster/home/SGVAE/runs/13095188-0/inf_config.yaml
