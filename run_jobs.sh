@@ -1,2 +1,0 @@
-rm tmp_logs/*
-

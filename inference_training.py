@@ -1,10 +1,11 @@
+import copy
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
+import wandb
 import sgvae_training
 import utils
-import dataset_structs
 import pdb
 
 def gen_latent(FLAGS,loader,encoder,action_names,dataset2build):
@@ -26,7 +27,6 @@ def gen_latent(FLAGS,loader,encoder,action_names,dataset2build):
 
             dataset2build.append_row()
     return 
-
 
 def latent_dataset_generator(inf_config,vae_config):
     #### create VAE & initial dataset ####
@@ -52,6 +52,61 @@ def latent_dataset_generator(inf_config,vae_config):
             gen_latent(vae_config,loader,encoder,vaeds.act_list,infds)
 
     return inf_tr_set,inf_v_set,inf_ts_set
+
+def process_epoch(FLAGS, model, loader, loss_func, optimizer=None):
+    total_loss = 0
+    for data,_,_,labels in loader:
+        pred = model(data.to(FLAGS.device))
+        batch_loss = loss_func(pred,labels.to(FLAGS.device))
+
+        if optimizer:
+            optimizer.zero_grad()
+            batch_loss.backward()
+            optimizer.step()
+
+        total_loss += batch_loss
+    return total_loss.detach().cpu() / len(loader)
+
+
+def train_model(FLAGS, model, loss_func, train_set, val_set,
+                optimizer):
+    train_loader = DataLoader(train_set,batch_size=FLAGS.batch_size,shuffle=True)
+    val_loader = DataLoader(val_set,batch_size=FLAGS.batch_size,shuffle=False)
+    
+    # for training & validation, only use final iteration
+    train_set.set_iteration('last')
+    val_set.set_iteration('last')
+    
+    # training
+    # best_train_loss = 10000
+    best_epoch = 0
+    best_val_loss = 10000
+    best_model = copy.deepcopy(model)
+
+    for epoch in FLAGS.end_epoch:
+        print('')
+        print('Epoch #' + str(epoch) + '......................................................................')
+        
+        train_loss = process_epoch(FLAGS, model, train_loader, loss_func, optimizer)
+        with torch.no_grad():
+            val_loss = process_epoch(FLAGS, model, val_loader, loss_func)
+        wandb.log({'Training Loss':train_loss,'Validation Loss':val_loss},step=epoch)
+        
+        if val_loss < best_val_loss:
+            # best_train_loss = train_loss
+            best_epoch = epoch
+            best_val_loss = val_loss
+            best_model = copy.deepcopy(model)
+
+    utils.save_inf_checkpoint(FLAGS.save_path,best_epoch,best_model,optimizer)
+    
+    return best_model
+
+def eval_model(FLAGS, model, loss_func, dataset):
+    with torch.no_grad():
+        loader = DataLoader(dataset,batch_size=FLAGS.batch_size,shuffle=False)
+        loss = process_epoch(FLAGS, model, loader, loss_func)
+    return loss
 
 
 

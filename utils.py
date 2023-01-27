@@ -218,6 +218,15 @@ def load_vae_checkpoint(folder,epoch,encoder,decoder,
         indices = json.load(f)
     return encoder, decoder, optimizer, scheduler, indices
 
+def save_inf_checkpoint(file_name,epoch,model,optimizer=None,scheduler=None):
+    checkpoint = {
+        'epoch': epoch,
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict() if optimizer is not None else None,
+        'lr_sched': scheduler.state_dict() if scheduler is not None else None
+    }
+    torch.save(checkpoint, file_name + f'_{epoch}.pth')
+
 def weights_init(layer):
     r"""Apparently in Chainer Lecun normal initialisation was the default one
     """

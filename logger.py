@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 from tensorboardX import SummaryWriter
 import wandb
@@ -49,23 +50,3 @@ class vae_loss_logger():
                      f'{fl}/KL Content': {i:self.kl_content[i] for i in range(self.iterations)},
                      f'{fl}/KL Style': {i:self.kl_style[i] for i in range(self.iterations)}}
         wandb.log(loss_dict,step=epoch)
-    # def update_writer(self,writer,epoch):
-    #     fl = self.stage[0]
-    #     writer.add_scalar(f'{self.stage} Loss/Total',self.total_loss,epoch)
-    #     for i in range(self.iterations):
-    #         writer.add_scalar(f'{fl}E{i}',self.elbo[i],epoch)
-    #         writer.add_scalar(f'{fl}M{i}',self.mle[i],epoch)
-    #         writer.add_scalar(f'{fl}C{i}',self.kl_content[i],epoch)
-    #         writer.add_scalar(f'{fl}S{i}',self.kl_style[i],epoch)
-
-    # def layout(self):
-    #     fl = self.stage[0]
-    #     layout = {
-    #         f"{self.stage} Loss":{
-    #             "ELBO": ["Multiline", [f"{fl[:1]}E{i}" for i in range(self.iterations)]],
-    #             "MLE": ["Multiline", [f"{fl}M{i}" for i in range(self.iterations)]],
-    #             "KL Content": ["Multiline", [f"{fl}C{i}" for i in range(self.iterations)]],
-    #             "KL Style": ["Multiline", [f"{fl}S{i}" for i in range(self.iterations)]],
-    #         }
-    #     }
-    #     return layout

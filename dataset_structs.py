@@ -217,16 +217,17 @@ class full_classification(tactile_explorations):
 
 class latent_representations(Dataset):
     def __init__(self, FLAGS):
-        sequence_len = FLAGS.action_repetitions*4
+        self.sequence_len = FLAGS.action_repetitions*4
         self.style = (FLAGS.style_dim > 0)
         self.property_values = property_df()
-        columns = [f'content {i}' for i in range(sequence_len)]
+        columns = [f'content {i}' for i in range(self.sequence_len)]
         if self.style:
-            columns.extend(f'style {i}' for i in range(sequence_len))
-        columns.extend(f'action {i}' for i in range(sequence_len))
+            columns.extend(f'style {i}' for i in range(self.sequence_len))
+        columns.extend(f'action {i}' for i in range(self.sequence_len))
         columns.extend(['object'])
         columns.extend(col for col in self.property_values.columns)
         self.data = pd.DataFrame(columns=columns).astype(object)
+
 
     def __len__(self):
         return len(self.data)
@@ -271,7 +272,12 @@ class latent_representations(Dataset):
         self.ltnt_type = ltnt_type
     
     def set_iteration(self,iter):
-        self.iter = iter
+        if iter is 'last':
+            self.iter = self.sequence_len - 1
+        elif (iter < 0) or (iter > self.sequence_len - 1):
+            raise ValueError
+        else:
+            self.iter = iter
 
     def get_class_cnt(self):
         return get_num_classes(self.label,property_df())

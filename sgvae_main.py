@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 import sgvae_training as trl
 import utils
-import losses
+import logger
 import wandb
 from datetime import datetime
 
@@ -54,8 +54,8 @@ def main(config):
 
     #config.save_path=writer.logdir
     config.save_path = os.path.join('runs',config.save_path)
-    train_loss_logger = losses.vae_loss_logger(config,'Training')
-    val_loss_logger = losses.vae_loss_logger(config,'Validation')
+    train_loss_logger = logger.vae_loss_logger(config,'Training')
+    val_loss_logger = logger.vae_loss_logger(config,'Validation')
 
     # with open(f'{config.logdir}/../run_tracker.csv', mode='a+',newline='') as tracking_file:
     #     meta_track = csv.DictWriter(tracking_file,fieldnames=['Output_folder',*vars(FLAGS).keys()])

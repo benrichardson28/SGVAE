@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from networks import Encoder, Decoder, Property_model
 from utils import weights_init, reparameterize, setup_models, cNs_init
 from dataset_structs import tactile_explorations,split_indices,latent_representations
-import training
+import sgvae_training
 from property_maps import property_df,get_num_classes
 import pandas as pd
 
@@ -51,7 +51,7 @@ def gen_latent_dataset(FLAGS,loader,encoder,decoder,action_names,device):
                                                      FLAGS.class_dim,FLAGS.style_dim,device)
             cm_ar,clv_ar,sm_ar,slv_ar = [],[],[],[]
             for i in range(4):
-                sm,slv,cm,clv,_,_=training.single_pass(X, action_batch, i, context,
+                sm,slv,cm,clv,_,_=sgvae_training.single_pass(X, action_batch, i, context,
                                                        style_mu, style_logvar,
                                                        encoder, decoder, training=True)
                 #print(training.loss(FLAGS,cm,clv,sm,slv,mu_x,lv_x,X))
