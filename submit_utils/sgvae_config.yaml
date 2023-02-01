@@ -1,0 +1,40 @@
+# general parameters
+data_path: ${DATA_PATH}
+save_path: ${SAVE_PATH}
+device: 'gpu'
+
+# dataset
+dataset: 'new'
+action_repetitions: ${ACTION_REPETITIONS}
+split_ratio: 4
+
+# training parameters
+epochs: 500
+max_epochs: 50
+batch_size: 32
+
+# adam optimizer parameters
+initial_learning_rate: 0.0001
+beta_1: 0.9
+beta_2: 0.999
+
+# model architecture parameters 
+# (set style=0 for classic VAE)
+content_dim: 10
+style_dim: 10
+keep_style: ${KEEP_STYLE}
+update_prior: ${UPDATE_PRIOR}
+
+in_channels: 195
+hidden_dims: [32, 32, 32, 32]
+kernels: [6, 6, 5, 4]
+strides: [4, 4, 2, 2]
+paddings: [1, 1, 1, 0]
+
+# loss parameters
+content_coef: 1.0
+style_coef: ${STYLE_COEF}
+beta_VAE: ${BETA_VAE}
+reduction: 'mean'
+beta_NLL: 1.0
+weight_style:
