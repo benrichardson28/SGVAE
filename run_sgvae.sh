@@ -69,7 +69,7 @@ recursive_parameters "${param_names[@]}"
 
 if [ -n "$2" ]
 then
-    condor_submit $2 "$UTILS_PATH"/sgvae_submit.sub
+    condor_submit_bid $2 "$UTILS_PATH"/sgvae_submit.sub
 else
     echo "doing nothing"
     #python inference_main.py -c $(realpath -s $DIR)/inf_config.yaml --save_path=run$rep

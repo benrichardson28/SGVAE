@@ -7,3 +7,4 @@ wandb/*
 .vscode/*
 *test*
 *.pyc
+submit_utils/*.txt
