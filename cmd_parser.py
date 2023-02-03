@@ -21,14 +21,14 @@ def parse_vae_config(argv=None):
                         is_config_file=True,
                         help='config file')
 
+    parser.add_argument('--cluster_timer', type=int, default=None, help="for cluster: How long to run before restarting. Only useful for cluser.")
     parser.add_argument('--device',type=str, default='gpu',choices=['gpu','cpu'])
     # path parameters
     parser.add_argument('--data_path', type=str, default="/fast/richardson/robot_grasp_data/")
     parser.add_argument('--save_path', type=str, default="runs/1")
 
     # training
-    parser.add_argument('--epochs', type=int, default=500, help="flag to set the starting epoch for training")
-    parser.add_argument('--max_epochs', type=int, default=10000)
+    parser.add_argument('--total_epochs', type=int, default=10000, help="Max epochs to train.")
     parser.add_argument('--batch_size', type=int, default=32, help="batch size for training")
 
     # optimizer
