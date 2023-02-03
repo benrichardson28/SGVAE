@@ -1,6 +1,6 @@
 executable = /home/richardson/miniconda3/envs/ball_env/bin/python
 
-arguments = sgvae_main.py $(a1)
+arguments = sgvae_main.py $(a1) --cluster_timer=3600
 
 error = /home/richardson/SGVAE/tmp_logs/$(Cluster)-lin-6-$(Process).err
 output = /home/richardson/SGVAE/tmp_logs/$(Cluster)-lin-6-$(Process).out
@@ -14,13 +14,13 @@ requirements = (TARGET.CUDACapability >= 7.0) && (TARGET.CUDACapability <= 7.5) 
 +MaxRunningPrice=100
 +RunningPriceExceededAction = "restart"
 
-
-##### Maximum continuous execution time for the job, in seconds
-MaxTime = 300
-periodic_hold = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
-periodic_hold_reason = "Job runtime exceeded"
-periodic_hold_subcode = 1
+#### Supposed to be for stopping and resuming 
+on_exit_hold = (ExitCode =?= 3)
+on_exit_hold_reason = "Checkpointed, will resume"
+on_exit_hold_subcode = 1
+ 
 periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 1) )
 #############################
+
 
 queue a1 from submit_utils/sgvae_args.txt

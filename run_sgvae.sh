@@ -12,7 +12,7 @@ if [ -n "$1" ]; then REPEATS=$1; else REPEATS=1; fi
 ## dictionary. Set as value or array. ##
 DATA_PATH_ARR="/fast/richardson/robot_grasp_data/"
 DATASET_ARR="new"
-declare -a ACTION_REPETITIONS_ARR=(1)
+declare -a ACTION_REPETITIONS_ARR=(1 2)
 declare -a STYLE_COEF_ARR=(0.1 0.5 1 5 10 15 20)
 declare -a KEEP_STYLE_ARR=(True False)
 declare -a UPDATE_PRIOR_ARR=(True False)
@@ -46,7 +46,7 @@ mkdir -p $path
 envsubst < $UTILS_PATH/sgvae_config.yaml > $path/sgvae_config.yaml
 echo "-c $path/sgvae_config.yaml">> $UTILS_PATH/sgvae_args.txt
 COUNTER=$[COUNTER+1]
-exit 0
+#exit 0
 }
 
 function recursive_parameters(){
@@ -69,7 +69,7 @@ recursive_parameters "${param_names[@]}"
 
 if [ -n "$2" ]
 then
-    condor_submit $2 "$SUBMIT_PATH"/sgvae_submit.sub
+    condor_submit $2 "$UTILS_PATH"/sgvae_submit.sub
 else
     echo "doing nothing"
     #python inference_main.py -c $(realpath -s $DIR)/inf_config.yaml --save_path=run$rep

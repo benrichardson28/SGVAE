@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from collections import OrderedDict
-
 
 class Encoder(nn.Module):
     def __init__(self, style_dim, content_dim,**kwargs):
@@ -24,6 +22,8 @@ class Encoder(nn.Module):
         self.conv = nn.Sequential(*modules)
         self.cos = cos
         in_features = kwargs['hidden_dims'][-1]*cos + 2*content_dim
+        #if not kwargs['remove_context']: in_features += 2*content_dim
+
         mlp_sz = 100
         self.lin1 = nn.Sequential(nn.Linear(in_features=in_features, out_features=mlp_sz, bias=True),
                                   nn.LeakyReLU())
@@ -39,7 +39,8 @@ class Encoder(nn.Module):
     def forward(self, x, context=None):
         x = self.conv(x)
         x = torch.flatten(x, start_dim=1)
-        x = torch.cat([x,context],dim=1)
+        if context is not None:
+            x = torch.cat([x,context],dim=1)
         x = self.lin1(x)
 
         style_latent_space_mu = self.style_mu(x)

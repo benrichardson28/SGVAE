@@ -1,4 +1,5 @@
 import os
+import re
 from argparse import Namespace
 import copy
 import torch
@@ -19,14 +20,14 @@ def create_vae_models(FLAGS):
     """
     model definitions
     """
-
     encoder = Encoder(style_dim=FLAGS.style_dim, 
                       content_dim=FLAGS.content_dim,
                       in_channels = FLAGS.in_channels,
                       hidden_dims = FLAGS.hidden_dims,
                       kernels = FLAGS.kernels,
                       strides = FLAGS.strides,
-                      paddings = FLAGS.paddings)
+                      paddings = FLAGS.paddings,
+                    )#remove_context = FLAGS.update_prior)
     #encoder.apply(weights_init)
     decoder = Decoder(style_dim=FLAGS.style_dim, 
                       content_dim=FLAGS.content_dim,
@@ -43,7 +44,8 @@ def create_vae_optimizer(FLAGS,encoder,decoder):
     optimizer = optim.Adam(
         list(encoder.parameters()) + list(decoder.parameters()),
         lr=FLAGS.initial_learning_rate,
-        betas=(FLAGS.beta_1, FLAGS.beta_2)
+        betas=(FLAGS.beta_1, FLAGS.beta_2),
+        eps=10e-4
     )
     return optimizer
 
@@ -53,8 +55,6 @@ def create_vae_scheduler():
 def create_vae_datasets(FLAGS,indices=None,test=False):
     train_set = dst.tactile_explorations(FLAGS,train=True,
                                          dataset=FLAGS.dataset)
-    # validation_set = tactile_explorations(FLAGS.data_path,train=True,
-    #                                       dataset=FLAGS.dataset)
     validation_set = copy.deepcopy(train_set)
     if indices is None:
         train_indices, val_indices = dst.split_indices(train_set,
@@ -83,10 +83,9 @@ def create_inference_datasets(iters):
 
 def cNs_init(FLAGS,size):
     act_num = 4 * FLAGS.action_repetitions
-    context = torch.cat([torch.zeros(size,FLAGS.content_dim),
-                         0.5*torch.ones(size,FLAGS.content_dim)],dim=1).to(FLAGS.device)
+    context = torch.zeros(size,2*FLAGS.content_dim).to(FLAGS.device)
     style_mu = torch.zeros(size,act_num,FLAGS.style_dim).to(FLAGS.device)
-    style_logvar = 0.5*torch.ones(size,act_num,FLAGS.style_dim).to(FLAGS.device)
+    style_logvar = torch.zeros(size,act_num,FLAGS.style_dim).to(FLAGS.device)
     return context, style_mu, style_logvar
 
 def mse_loss(input, target):
@@ -105,125 +104,61 @@ def reparameterize(training, mu, logvar):
     else:
         return mu
 
-def group_wise_reparameterize(training, mu, logvar, labels_batch,
-                            list_groups_labels, sizes_group, cuda):
-    eps_dict = {}
-    batch_size = labels_batch.size(0)
-    # generate only 1 eps value per group label
-    for i, g in enumerate(list_groups_labels):
-        if cuda:
-            eps_dict[g] = torch.cuda.FloatTensor(1, logvar.size(1)).normal_()
-        else:
-            eps_dict[g] = torch.FloatTensor(1, logvar.size(1)).normal_()
-
-    if training:
-        std = logvar.mul(0.5).exp_()
-    else:
-        std =torch.zeros_like(logvar)
-
-    content_samples = []
-    indexes = []
-    sizes = []
-    # multiply std by correct eps and add mu
-    for i, g in enumerate(list_groups_labels):
-        samples_group = labels_batch.eq(g).nonzero().squeeze()
-        size_group = samples_group.numel()
-        assert size_group == sizes_group[i]
-        if size_group > 0:
-
-            reparametrized = std[i][None,:] * eps_dict[g] + mu[i][None,:]
-            group_content_sample = reparametrized.repeat((size_group,1))
-            content_samples.append(group_content_sample)
-            if size_group == 1:
-                samples_group = samples_group[None]
-            indexes.append(samples_group)
-            size_group = torch.ones(size_group) * size_group
-            sizes.append(size_group)
-
-    content_samples = torch.cat(content_samples,dim=0)
-    indexes = torch.cat(indexes)
-    sizes = torch.cat(sizes)
-
-    return content_samples, indexes, sizes
-
-def group_wise_reparameterize_each(training, mu, logvar, labels_batch,
-                            list_groups_labels, sizes_group, cuda):
-    eps_dict = {}
-    batch_size = labels_batch.size(0)
-
-    if training:
-        std = logvar.mul(0.5).exp_()
-    else:
-        std =torch.zeros_like(logvar)
-
-    content_samples = []
-    indexes = []
-    sizes = []
-
-
-    # multiply std by correct eps and add mu
-    for i, g in enumerate(list_groups_labels):
-        samples_group = labels_batch.eq(g).nonzero().squeeze()
-        size_group = samples_group.nelement()
-        #always get annoying size error when nelements is 0 or 1
-        try:
-            if len(samples_group.size()) > 0:
-                size_group = samples_group.size(0)
-        except:
-            pdb.set_trace()
-        #assert size_group == sizes_group[i]
-        if size_group > 0:
-            if cuda:
-                eps = torch.cuda.FloatTensor(size_group, std.size(1)).normal_()
-            else:
-                eps = torch.FloatTensor(size_group, std.size(1)).normal_()
-            group_content_sample = std[i][None,:] * eps + mu[i][None,:]
-            content_samples.append(group_content_sample)
-            if size_group == 1:
-                samples_group = samples_group[None]
-            indexes.append(samples_group)
-            size_group = torch.ones(size_group) * size_group
-            sizes.append(size_group)
-    content_samples = torch.cat(content_samples,dim=0)
-    indexes = torch.cat(indexes)
-    sizes = torch.cat(sizes)
-
-    return content_samples, indexes, sizes
-
-def save_vae_checkpoint(folder,epoch,encoder,decoder,
-                        optimizer=None,scheduler=None):
+def save_vae_checkpoint(folder,epoch,wandb_id,
+                        encoder,decoder,
+                        optimizer=None,scheduler=None
+                        ):
     checkpoint = { 
         'epoch': epoch,
         'encoder': encoder.state_dict(),
         'decoder': decoder.state_dict(),
         'optimizer': optimizer.state_dict() if optimizer is not None else None,
-        'lr_sched': scheduler.state_dict() if scheduler is not None else None}
+        'lr_sched': scheduler.state_dict() if scheduler is not None else None,
+        'wandb_id': wandb_id
         #'loss_logger': loss_logger}
+    }
     torch.save(checkpoint, os.path.join(folder,f'checkpoint_{epoch}.pth'))
 
-def load_vae_checkpoint(folder,epoch,encoder,decoder,
-                        optimizer=None,scheduler=None):
-    filename = os.path.join(folder,'checkpoint',f'checkpoint_{epoch}.pth')
+def checkpoint_exists(folder):
+    checkpoint_folder = os.path.join(folder,'checkpoints')
+    if not os.path.isdir(checkpoint_folder): return False
+    if len(os.listdir(checkpoint_folder)) == 0: return False
+    max_epoch=0
+    for checkpoint in os.listdir(checkpoint_folder):
+        ep = re.findall(r"\d+",checkpoint)
+        max_epoch = max(int(ep[0]),max_epoch)
+    return max_epoch
+    
+def load_vae_checkpoint(device,
+                        folder,
+                        epoch,
+                        encoder,
+                        decoder,
+                        optimizer=None,
+                        scheduler=None):
+    print("Loading checkpoint")
+    filename = os.path.join(folder,'checkpoints',f'checkpoint_{epoch}.pth')
     if os.path.isfile(filename):
-        checkpoint = torch.load(filename, map_location='cpu')
-        start_epoch = checkpoint['epoch']
+        checkpoint = torch.load(filename, map_location=device)
         encoder.load_state_dict(checkpoint['encoder'])
         decoder.load_state_dict(checkpoint['decoder'])
         if optimizer:
             optimizer.load_state_dict(checkpoint['optimizer'])
         if scheduler:
             scheduler.load_state_dict(checkpoint['scheduler'])
+        wandb_id = checkpoint['wandb_id']
         #loss_logger = checkpoint(['loss_logger'])
     with open(os.path.join(folder,'split_indices.json')) as f:
         indices = json.load(f)
-    return encoder, decoder, optimizer, scheduler, indices
+    return encoder, decoder, optimizer, scheduler, indices, wandb_id
 
-def save_inf_checkpoint(file_name,epoch,model,optimizer=None,scheduler=None):
+def save_inf_checkpoint(file_name,epoch,model,
+                        optimizer=None,scheduler=None):
     checkpoint = {
         'epoch': epoch,
         'model': model.state_dict(),
         'optimizer': optimizer.state_dict() if optimizer is not None else None,
-        'lr_sched': scheduler.state_dict() if scheduler is not None else None
+        'lr_sched': scheduler.state_dict() if scheduler is not None else None,
     }
     torch.save(checkpoint, file_name + f'_{epoch}.pth')
 

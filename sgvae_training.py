@@ -1,36 +1,42 @@
-import os
-import os.path
-import random
-import numpy as np
-import math
-import yaml
-import csv
 
+import math
 import torch
-import torch.optim as optim
-from torch.distributions import Normal, Bernoulli, MultivariateNormal, kl
-from utils import weights_init
-from networks import Encoder, Decoder
-from torch.utils.data import DataLoader
-from utils import reparameterize
-from torch.nn import functional as F
-import torchvision.transforms as transforms
-from tensorboardX import SummaryWriter
-#from torch.utils.tensorboard import SummaryWriter
-from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
-from dataset_structs import tactile_explorations,split_indices
-import pdb
-import matplotlib.pyplot as plt
-import plotting
 import utils
 
-def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
-    if FLAGS.reduction=='sum':
-        style_kl_divergence_loss = 0.5 * ( - 1 - slv + sm.pow(2) + slv.exp()).sum()
-        content_kl_divergence_loss = 0.5 * ( - 1 - clv + cm.pow(2) + clv.exp()).sum()
-    elif FLAGS.reduction=='mean':
-        style_kl_divergence_loss = 0.5 * ( - 1 - slv + sm.pow(2) + slv.exp()).sum(dim=1).mean()
-        content_kl_divergence_loss = 0.5 * ( - 1 - clv + cm.pow(2) + clv.exp()).sum(dim=1).mean()
+def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
+    
+    # KL for multi-var gaussians. 
+    # For standard VAE, use KL(estimate || true posterior)
+    def multi_var_KL(m1,lv1,m2,lv2):
+        ### EQ: 1/2[ log(det VAR_2/det VAR_1) - n + tr{inv(VAR_2) * VAR_1} 
+        ###          + (MEAN_2 - MEAN_1)^T * inv(VAR_2) * (MEAN_2 - MEAN_1)]  
+        kl = 0.5*( (lv2-lv1+(lv1-lv2).exp() \
+                    +(m2-m1).pow(2)/lv2.exp()).sum(dim=1)  \
+                    - m1.shape[-1] )
+        if FLAGS.reduction=="sum": return kl.sum()
+        elif FLAGS.reduction=="mean": return kl.mean()
+        return kl
+    
+    # define standard normal prior
+    prior_mu = torch.zeros_like(cm)
+    prior_logvar = torch.zeros_like(clv)
+    # use
+    style_KL = multi_var_KL(sm,slv,prior_mu,prior_logvar)
+    
+    if prior is not None:
+        prior_mu,prior_logvar = prior
+    content_KL = multi_var_KL(cm,clv,prior_mu,prior_logvar)
+
+    # if FLAGS.reduction=='sum':
+    #     style_kl_divergence_loss = 0.5 * ( - 1 - slv + sm.pow(2) + slv.exp()).sum()
+    #     content_kl_divergence_loss = 0.5 * ( - 1 - clv + cm.pow(2) + clv.exp()).sum()
+    # elif FLAGS.reduction=='mean':
+    #     style_kl_divergence_loss = 0.5 * ( - 1 - slv + sm.pow(2) + slv.exp()).sum(dim=1).mean()
+    #     content_kl_divergence_loss = 0.5 * ( - 1 - clv + cm.pow(2) + clv.exp()).sum(dim=1).mean()
+    #BUILD IN THE KL BETWEEN the current content and the previous content (context)
+    
+    ####################################################################
+
 
     #### gaussian_beta_log_likelihood_loss(pred, target, beta=1):
     scale_x = (torch.exp(logvar_x) + 1e-12)#**0.5
@@ -46,12 +52,11 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights=None):
         if style_weights is not None:
             logp_batch *= style_weights
         reconstruction_proba = logp_batch.mean(-1).mean()
-    #reconstruction_proba /= (FLAGS.action_repetitions * 4)
+  
+    total_KL = FLAGS.style_coef*style_KL + FLAGS.content_coef*content_KL
+    elbo = (reconstruction_proba - FLAGS.beta_VAE * total_KL)
 
-    total_kl = FLAGS.style_coef*style_kl_divergence_loss + FLAGS.content_coef*content_kl_divergence_loss
-    elbo = (reconstruction_proba - FLAGS.beta_VAE * total_kl)
-
-    return elbo, reconstruction_proba, style_kl_divergence_loss, content_kl_divergence_loss
+    return elbo, reconstruction_proba, style_KL, content_KL
 
 def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
     context, style_mu, style_logvar = utils.cNs_init(FLAGS,X.shape[0])
@@ -60,9 +65,13 @@ def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
 
     total_elbo = 0
     # context loop
+
+    #pdb.set_trace()
     for cs in range(X.size(1)):
         #pass in first sample -> get content and style
-        sm,slv,cm,clv,mu_x,logvar_x = single_pass(X,action_batch,cs,context,style_mu,style_logvar,encoder,decoder)
+        sm,slv,cm,clv,mu_x,logvar_x = single_pass(FLAGS,X,action_batch,cs,
+                                                  context,style_mu,style_logvar,
+                                                  encoder,decoder)
 
         style_weights = None
         if FLAGS.weight_style:
@@ -70,8 +79,12 @@ def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
             style_weights = style_weights.to(FLAGS.device)
             style_weights[:,:-1-cs] *= 0.5
 
+        prior = None
+        if FLAGS.update_prior:
+            prior = torch.tensor_split(context,2,dim=1)
+
         elbo, mle, kl_style, \
-            kl_content = loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,style_weights)
+            kl_content = loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior,style_weights)
         total_elbo += elbo*1.
         loss_logger.update_epoch_loss(elbo,mle,kl_content,kl_style,cs)
 
@@ -80,13 +93,20 @@ def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
 
     return total_elbo / (FLAGS.action_repetitions*4)
 
-def single_pass(X,action_batch,cs,context,style_mu,style_logvar,encoder,decoder,training=True):
+def single_pass(FLAGS,X,action_batch,cs,
+                context,style_mu,style_logvar,
+                encoder,decoder,training=True):
     #style vars should be updated outside the function
+    #UPDATE SO THAT THE STYLE IS NOT SAVED AFTER IT IS USED ONCE
+
+
+    ####################################################################
 
     sm,slv,cm,clv = encoder(X[:,-1-cs],context)
     #add on other styles, concat content
-    style_mu[:,-1-cs] = sm.detach().clone()
-    style_logvar[:,-1-cs] = slv.detach().clone()
+    if FLAGS.keep_style:
+        style_mu[:,-1-cs] = sm.detach().clone()
+        style_logvar[:,-1-cs] = slv.detach().clone()
     content_mu = cm.unsqueeze(1).repeat([1,X.size(1),1])
     content_logvar = clv.unsqueeze(1).repeat([1,X.size(1),1])
 
@@ -94,9 +114,9 @@ def single_pass(X,action_batch,cs,context,style_mu,style_logvar,encoder,decoder,
         return sm,slv,cm,clv
     
     #reparam
-    content_latent_embeddings = reparameterize(training=training, mu=content_mu, logvar=content_logvar)   #batch x 4 x 10
-    single_style_latent = reparameterize(training=training, mu=sm, logvar=slv)   #batch x 10
-    style_latent_embeddings = reparameterize(training=training, mu=style_mu, logvar=style_logvar)
+    content_latent_embeddings = utils.reparameterize(training=training, mu=content_mu, logvar=content_logvar)   #batch x 4 x 10
+    single_style_latent = utils.reparameterize(training=training, mu=sm, logvar=slv)   #batch x 10
+    style_latent_embeddings = utils.reparameterize(training=training, mu=style_mu, logvar=style_logvar)
 
     style_latent_embeddings[:,-1-cs] = single_style_latent
 
@@ -109,10 +129,10 @@ def single_pass(X,action_batch,cs,context,style_mu,style_logvar,encoder,decoder,
 def eval(FLAGS, encoder, decoder, loader, logger, epoch):
 
     with torch.no_grad():
-        for it, (data_batch, action_batch, obj_batch) in enumerate(loader):
+        for it, (data_batch, action_batch, _) in enumerate(loader):
 
-            elbo = process(FLAGS, data_batch, action_batch, 
-                           encoder, decoder, logger)
+            _ = process(FLAGS, data_batch, action_batch, 
+                        encoder, decoder, logger)
 
     logger.finalize_epoch_loss(it+1)
     logger.logwandb(epoch)
@@ -121,7 +141,7 @@ def train_epoch(FLAGS,encoder,decoder,optimizer,
                 train_loader,train_logger,
                 epoch):
 
-    for it, (data_batch, action_batch, obj_batch) in enumerate(train_loader):
+    for it, (data_batch, action_batch, _) in enumerate(train_loader):
         # set zero_grad for the optimizer
         optimizer.zero_grad()
         X = data_batch.to(FLAGS.device).detach().clone()
@@ -135,4 +155,5 @@ def train_epoch(FLAGS,encoder,decoder,optimizer,
 
     train_logger.finalize_epoch_loss(it+1)
     train_logger.print_losses()
-    train_logger.logwandb(epoch)
+    if (epoch + 1) % 10:
+        train_logger.logwandb(epoch)

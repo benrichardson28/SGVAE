@@ -1,20 +1,23 @@
 import sys
 import os
 import os.path
-import cmd_parser
-import yaml
+import time
+import wandb
 import json
 import torch
 from torch.utils.data import DataLoader
-from tensorboardX import SummaryWriter
+import cmd_parser
 import sgvae_training as trl
 import utils
 import logger
-import wandb
-from datetime import datetime
+
+import pdb
 
 
 def main(config):
+    start_time = time.perf_counter()
+    print(start_time)
+
     if torch.cuda.is_available() and (config.device=='gpu'):
         print('Cuda available; running on gpu.')
         config.device = torch.device('cuda')
@@ -25,18 +28,22 @@ def main(config):
     # models and optimizer
     print('Creating models.')
     encoder,decoder = utils.create_vae_models(config)
-    optimizer = utils.create_vae_optimizer(config,encoder,decoder)
-
-    indices = None
-    if config.load_checkpoint:
-        print('Loading checkpoint.')
-        encoder,decoder,optimizer,_,indices = utils.load_vae_checkpoint(
-                                                config.load_checkpoint,
-                                                config.start_epoch,
-                                                encoder,decoder,optimizer)
     encoder.to(config.device)
     decoder.to(config.device)
-    
+    optimizer = utils.create_vae_optimizer(config,encoder,decoder)
+
+    indices, wandb_id = None, None
+    checkpoint = utils.checkpoint_exists(config.save_path)
+    if checkpoint:
+        encoder,decoder,\
+            optimizer,_,indices,\
+                 wandb_id = utils.load_vae_checkpoint(config.device,
+                                                      config.save_path,
+                                                      checkpoint,
+                                                      encoder,
+                                                      decoder,
+                                                      optimizer)
+
     # datasets
     print('Creating datasets.')
     training_set, validation_set, indices, _ = utils.create_vae_datasets(config,indices)
@@ -48,33 +55,33 @@ def main(config):
     val_loader = DataLoader(validation_set,batch_size=config.batch_size,
                             **kwargs)
 
-    # writer and tracker
-    wandb_id = wandb.util.generate_id()
-    wandb.init(config=config,project="SGVAE", entity="brichardson",id=wandb_id)
-
-    #config.save_path=writer.logdir
-    config.save_path = os.path.join('runs',config.save_path)
+    # Set up error logging and wandb for global tracking
+    os.environ["WANDB_SILENT"] = "true"
+    if wandb_id is None:
+        wandb_id = wandb.util.generate_id()
+    wandb.init(config=config,project="SGVAE", 
+               entity="brichardson",
+               id=wandb_id,
+               group=f'keep_s:{config.keep_style},update_prior:{config.update_prior}',
+               resume="allow",
+               config_include_keys=('action_repetitions','dataset','keep_style',
+                                    'update_prior','style_coef','beta_VAE',
+                                    'style_dim'))
+    wandb.watch(models=[encoder,decoder])
     train_loss_logger = logger.vae_loss_logger(config,'Training')
     val_loss_logger = logger.vae_loss_logger(config,'Validation')
 
-    # with open(f'{config.logdir}/../run_tracker.csv', mode='a+',newline='') as tracking_file:
-    #     meta_track = csv.DictWriter(tracking_file,fieldnames=['Output_folder',*vars(FLAGS).keys()])
-    #     if len(open(f'{FLAGS.logdir}/../run_tracker.csv', 'r').readlines())<=1:
-    #         meta_track.writeheader()
-    #     hlink = f'=HYPERLINK("/home/richardson/cluster/robot_haptic_perception/{FLAGS.logdir}")'
-    #     meta_track.writerow({'Output_folder':hlink,**vars(FLAGS)})
-    if not os.path.exists(config.save_path):
-        os.makedirs(config.save_path)
-    with open(f'{config.save_path}/config.yaml', 'w') as conf_file:
-        yaml.dump(config, conf_file)
-    with open(f'{config.save_path}/split_indices.json', 'w') as ix_file:
-        json.dump(indices, ix_file)
+    # make folders if needed, save train/val indices if necessary
+    os.makedirs(config.save_path,exist_ok=True)
+    if checkpoint is False:
+        with open(f'{config.save_path}/split_indices.json', 'w') as ix_file:
+            json.dump(indices, ix_file)
     config.save_path = f'{config.save_path}/checkpoints'
-    if not os.path.exists(config.save_path):
-        os.makedirs(config.save_path)
+    os.makedirs(config.save_path,exist_ok=True)
 
-
-    for epoch in range(config.end_epoch - config.start_epoch):
+    # training loop
+    start_epoch = checkpoint+1 if checkpoint else 0
+    for epoch in range(start_epoch, config.total_epochs):
         train_loss_logger.reset_epoch_loss()
         val_loss_logger.reset_epoch_loss()
 
@@ -87,15 +94,29 @@ def main(config):
                         train_loader,train_loss_logger,
                         epoch)
 
-        # save checkpoints after every 5 epochs
-        if (epoch + 1) % 5 == 0 or (epoch + 1) == config.end_epoch:
+        # val every 10 epochs
+        if (epoch + 1) % 5 == 0:
             trl.eval(config, encoder, decoder, val_loader, val_loss_logger, 
                      epoch)
-            utils.save_vae_checkpoint(config.save_path,epoch,encoder,decoder)
-
+        # save checkpoint at end of time or last epoch
+        try:
+            # limit total amount of time the job can run on the cluster.
+            if ((time.perf_counter()-start_time) > config.cluster_timer):
+                utils.save_vae_checkpoint(config.save_path,epoch,wandb_id,
+                                        encoder,decoder,optimizer)
+                print('Exiting, should hold in cluster and resume')
+                return 3
+        except:
+            if (epoch + 1) % 25 == 0:
+                utils.save_vae_checkpoint(config.save_path,epoch,wandb_id,
+                                        encoder,decoder,optimizer)
+                
+    utils.save_vae_checkpoint(config.save_path,epoch,wandb_id,
+                                        encoder,decoder,optimizer)
+    return 0
 
 if __name__ == '__main__':
     config = cmd_parser.parse_vae_config(sys.argv[1:])
-    main(config)
+    sys.exit(main(config))
 
 

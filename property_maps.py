@@ -217,11 +217,11 @@ def property_df():
 
 
 def get_num_classes(label,properties):
-    if label == 'contents_fine':
+    if 'contents_fine' in label:
         cnt = properties['contents_fine_label'].unique().shape[0]
-    elif label == 'contents_rough':
+    elif 'contents_rough' in label:
         cnt = properties['contents_rough_label'].unique().shape[0]
-    elif label == 'contents_binary':
+    elif 'contents_binary' in label:
         cnt = properties['contents_binary_label'].unique().shape[0]
     elif label in ['width','height','mass','stiffness']:
         cnt = properties[f'{label}_cluster_label'].unique().shape[0]

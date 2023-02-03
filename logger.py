@@ -9,6 +9,7 @@ class vae_loss_logger():
         self.iterations = FLAGS.action_repetitions * 4
         self.reset_epoch_loss()
         self.stage = stage
+        #self.table = wandb.Table(columns=["Total","ELBO","NLL","KL Content","KL Style"])
 
     def reset_epoch_loss(self):
         self.total_loss = 0
@@ -44,6 +45,7 @@ class vae_loss_logger():
     def logwandb(self,epoch):
         fl=self.stage
         
+        #wandb.log({fl'})
         loss_dict = {f'{fl} Total': self.total_loss,
                      f'{fl}/ELBO': {i:self.elbo[i] for i in range(self.iterations)},
                      f'{fl}/MLE': {i:self.mle[i] for i in range(self.iterations)},
