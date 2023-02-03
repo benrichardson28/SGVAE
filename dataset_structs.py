@@ -20,7 +20,7 @@ from property_maps import property_df,get_num_classes
 class tactile_explorations(Dataset):
     def __init__(self, FLAGS, train=True, dataset='all',action_select=None):
         ds = 'train_df' if train else 'test_df'
-        if dataset=='objects':
+        if dataset=='orig':
             ds = ds+'_objs'
         if dataset=='new':
             ds = ds+'_newobjs'
@@ -118,7 +118,7 @@ class tactile_explorations(Dataset):
                 cnt=0
                 for act_x in act_dict.keys():
                     samp_num = self.repeats
-                    if act_x==act_1: samp_num -= 1 
+                    if act_x==act_1: samp_num -= 1
                     for _ in range(samp_num):
                         sample_ixs = random.SystemRandom().choices(act_dict[act_x],
                                                                 k=len(act1ix))
@@ -147,7 +147,7 @@ def split_indices(dataset,split_ratio,split_type):
                 split = int(len(td_ix)/split_ratio)
                 train_indices.extend(td_ix[split:])
                 val_indices.extend(td_ix[:split])
-    elif split_type in ['objects','new']:
+    elif split_type in ['orig','new']:
         obj_list = df['object'].unique()
         random.shuffle(obj_list)
         train_objs = obj_list[int(len(obj_list)/split_ratio):]
@@ -235,15 +235,15 @@ class latent_representations(Dataset):
     def __getitem__(self, index):
         row = self.data.iloc[index]
 
-        feats = row[f'{self.ltnt_type} {self.iter}']
+        feats = torch.squeeze(row[f'{self.ltnt_type} {self.iter}']).float()
         ball_ids = row['object']
-        
-        if 'contents' in self.label:
-            labels = row[f'{self.label}_label']
-        else:
-            labels = row[self.label]
 
-        actions = np.array([np.where(a==self.action_list)[0].item() for a in row[f'action {iter}']])
+        labels = torch.tensor(row[self.label]).float()
+        if 'contents' in self.label:
+            labels = labels.long()
+
+        actions = row[f'action {self.iter}']
+        # np.array([np.where(a==self.action_list)[0].item() for a in row[f'action {iter}']])
 
         return feats,actions,ball_ids,labels
 
@@ -270,9 +270,9 @@ class latent_representations(Dataset):
         if ltnt_type not in ['content','style']:
             raise ValueError('Must be "content" or "style".')
         self.ltnt_type = ltnt_type
-    
+
     def set_iteration(self,iter):
-        if iter is 'last':
+        if iter == 'last':
             self.iter = self.sequence_len - 1
         elif (iter < 0) or (iter > self.sequence_len - 1):
             raise ValueError
@@ -281,7 +281,7 @@ class latent_representations(Dataset):
 
     def get_class_cnt(self):
         return get_num_classes(self.label,property_df())
-    
+
 
 
     def get_cols(self):
@@ -300,5 +300,3 @@ class latent_representations(Dataset):
     #     else:
     #         self.transform = transform
     #     self.data = self.apply_transform()
-
-
