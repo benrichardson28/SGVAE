@@ -23,21 +23,19 @@ def main(inf_config,vae_config):
         print('Cuda available; running on gpu.')
         inf_config.device = torch.device('cuda')
         vae_config.device = torch.device('cuda')
-    else: 
+    else:
         print('Cuda unavailable; running on cpu.')
         inf_config.device = torch.device('cpu')
         vae_config.device = torch.device('cpu')
+
+    #vae_config.data_path='~/cluster/fast/robot_grasp_data'
+    base_path = os.path.join(inf_config.vae_model_path,'inference',inf_config.save_path)
+    inf_config.save_path = base_path[:]
     
-    pdb.set_trace()
-    vae_config.data_path='~/cluster/fast/robot_grasp_data'
+    os.makedirs(inf_config.save_path,exist_ok=True)
+    os.makedirs(os.path.join(inf_config.save_path,'models'),exist_ok=True)
+
     tr,vl,ts = itr.latent_dataset_generator(inf_config,vae_config)
-    pdb.set_trace()
-    inf_config.save_path = os.path.join(inf_config.vae_model_path,'inference')
-    base_path = os.path.join(inf_config.vae_model_path,'inference')
-    if not os.path.exists(inf_config.save_path):
-        os.makedirs(inf_config.save_path)
-    # with open(f'{inf_config.save_path}/config.yaml', 'w') as conf_file:
-    #     yaml.dump(inf_config, conf_file)
 
     results_df = pd.DataFrame(columns = ['Property','Latent Type',
                                         'Iteration','Dataset Type',
@@ -60,8 +58,10 @@ def main(inf_config,vae_config):
         for latent in latent_options:
             # writer and tracker
             wandb_id = wandb.util.generate_id()
-            wandb.init(config=inf_config,project="SGVAE", entity="brichardson",id=wandb_id,
-                       group='inference',tags=[property,latent])
+            wandb.init(config=vae_config,project="SGVAE_inference", entity="brichardson",id=wandb_id,
+                       )
+            wandb.config.update(inf_config,allow_val_change=True)
+            wandb.config.update({"property":property,"latent":latent})
 
             #config.save_path=writer.logdir
             #inf_config.save_path = os.path.join('runs',config.save_path)
@@ -73,8 +73,8 @@ def main(inf_config,vae_config):
             ts.set_latent(latent)
 
             inf_config.save_path = os.path.join(base_path,'models',
-                                                f'{property}_{latent}_')
-            
+                                                f'{property}_{latent}')
+
             if latent=='content': dim = 2*vae_config.content_dim
             if latent=='style': dim = 2*vae_config.style_dim
             model = networks.Property_model(z_dim=dim, num_classes=class_cnt).to(inf_config.device)
@@ -83,13 +83,13 @@ def main(inf_config,vae_config):
                 lr=inf_config.initial_learning_rate,
                 betas=(inf_config.beta_1, inf_config.beta_2),
                 weight_decay=inf_config.weight_decay
-            )           
+            )
 
-            best_model = itr.train_model(inf_config, model, 
-                                         loss_func, tr, vl, 
-                                         optimizer) 
-            
-            for iter in tr.sequence_len:
+            best_model = itr.train_model(inf_config, model,
+                                         loss_func, tr, vl,
+                                         optimizer)
+
+            for iter in range(tr.sequence_len):
                 for d_set,d_name in zip([tr,vl,ts],['Train','Val','Test']):
                     d_set.set_iteration(iter)
                     loss = itr.eval_model(inf_config,best_model,loss_func,d_set)
@@ -97,10 +97,11 @@ def main(inf_config,vae_config):
                                'Iteration':iter,'Dataset Type':d_name,
                                'MLE Loss':loss}
                     results_df = results_df.append(res_row,ignore_index=True)
-            
+
             # wrap up
             wandb.finish()
-    results_df.to_csv(os.path.join(inf_config.save_path,'results.csv'))
+            res_path = os.path.join(base_path,'results.csv')
+            results_df.to_csv(res_path,mode='a',header=not os.path.exists(res_path))
     return
 
 if __name__ == '__main__':
@@ -108,5 +109,3 @@ if __name__ == '__main__':
     with open(os.path.join(inf_config.vae_model_path,'config.yaml'), 'r') as f:
         vae_config = yaml.unsafe_load(f)
     main(inf_config,vae_config)
-
-
