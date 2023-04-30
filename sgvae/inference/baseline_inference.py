@@ -19,8 +19,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from dataset_structs import full_classification,split_indices
 from tensorboardX import SummaryWriter
+
+from sgvae.dataset_structs import full_classification,split_indices
 
 import pdb
 
@@ -173,7 +174,7 @@ def run_all(FLAGS):
         test.set_label(prop)
         if 'contents' in prop:
             loss_func = nn.CrossEntropyLoss()
-            class_cnt = train.get_class_cnt()
+            class_cnt = train.class_cnt
         else:
             loss_func = nn.MSELoss()
             class_cnt = 1

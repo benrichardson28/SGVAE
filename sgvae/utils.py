@@ -1,20 +1,15 @@
 import os
 import re
-from argparse import Namespace
+import json
 import copy
 import torch
-import torch.nn as nn
 import torch.optim as optim
-import matplotlib.pyplot as plt
-from torch.autograd import Variable
-from mpl_toolkits.axes_grid1 import ImageGrid
-import torchvision.transforms as transforms
+
+from sgvae.networks import Encoder,Decoder
+import sgvae.dataset_structs as dst
+
 import pdb
-import numpy as np
-from torchvision import datasets
-from networks import Encoder,Decoder
-import dataset_structs as dst
-import json
+
 
 def create_vae_models(FLAGS):
     """
@@ -88,14 +83,6 @@ def cNs_init(FLAGS,size):
     style_logvar = torch.zeros(size,act_num,FLAGS.style_dim).to(FLAGS.device)
     return context, style_mu, style_logvar
 
-def mse_loss(input, target):
-    return torch.sum((input - target).pow(2)) / input.data.nelement()
-
-
-def l1_loss(input, target):
-    return torch.sum(torch.abs(input - target)) / input.data.nelement()
-
-
 def reparameterize(training, mu, logvar):
     if training:
         std = logvar.mul(0.5).exp_()
@@ -162,45 +149,3 @@ def save_inf_checkpoint(file_name,epoch,model,
     }
     torch.save(checkpoint, file_name + f'_{epoch}.pth')
 
-def weights_init(layer):
-    r"""Apparently in Chainer Lecun normal initialisation was the default one
-    """
-    if isinstance(layer, nn.Linear):
-        lecun_normal_(layer.bias)
-        lecun_normal_(layer.weight)
-
-def lecun_normal_(tensor, gain=1):
-
-    import math
-    r"""Adapted from https://pytorch.org/docs/0.4.1/_modules/torch/nn/init.html#xavier_normal_
-    """
-    dimensions = tensor.size()
-    if len(dimensions) == 1:  # bias
-        fan_in = tensor.size(0)
-    elif len(dimensions) == 2:  # Linear
-        fan_in = tensor.size(1)
-    else:
-        num_input_fmaps = tensor.size(1)
-        if tensor.dim() > 2:
-            receptive_field_size = tensor[0][0].numel()
-        fan_in = num_input_fmaps * receptive_field_size
-
-    std = gain * math.sqrt(1.0 / (fan_in))
-    with torch.no_grad():
-        return tensor.normal_(0, std)
-
-def imshow_grid(images, shape=[2, 8], name='default', save=False):
-    """Plot images in a grid of a given shape."""
-    fig = plt.figure(1)
-    grid = ImageGrid(fig, 111, nrows_ncols=shape, axes_pad=0.05)
-
-    size = shape[0] * shape[1]
-    for i in range(size):
-        grid[i].axis('off')
-        grid[i].imshow(images[i])  # The AxesGrid object work as a list of axes.
-
-    if save:
-        plt.savefig('reconstructed_images/' + str(name) + '.png')
-        plt.clf()
-    else:
-        plt.show()

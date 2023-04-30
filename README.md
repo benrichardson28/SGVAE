@@ -1,4 +1,4 @@
-# SG-VAE
+# SG-VAE 
 <b> A Sequential Group VAE for Robot Learning of Haptic Representations. </b>\
 [[Workshop Paper](https://aligning-robot-human-representations.github.io/docs/camready_11.pdf)]
 

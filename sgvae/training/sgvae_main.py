@@ -6,10 +6,11 @@ import wandb
 import json
 import torch
 from torch.utils.data import DataLoader
-import cmd_parser
-import sgvae_training as trl
-import utils
-import logger
+
+import sgvae.cmd_parser as cmd_parser
+import sgvae.training.sgvae_training as trl
+import sgvae.utils as utils
+import sgvae.logger as logger
 
 import pdb
 

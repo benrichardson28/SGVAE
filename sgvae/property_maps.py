@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
 
 def property_df():
     ballname = {0:'empty',1:'baseball_1',
@@ -154,28 +153,6 @@ def property_df():
                 95:'bearings', 96:'popcorn', 97:'popcorn'
                 }
 
-    # def friction(obj_id):
-    #     fr = {0:0,1:,2:,3:,4:,5:,6:,7:,8:,9:,10:,11:,
-    #           12:,13:,14:,15:,16:,17:,18:,19:,20:,21:,
-    #           31:,32:,33:,34:,35:,36:,37:,38:,39:,40:,
-    #           41:,42:,43:,44:,45:,46:,
-    #           51:,52:,53:,54:,
-    #           55:,56:,57:,58:,
-    #           59:,60:,61:,62:,
-    #           63:,64:}
-    #     return fr[obj_id]
-
-    # def hardness(obj_id):  #shore hardness
-    #     hd = {0:0,1:,2:,3:,4:,5:,6:,7:,8:,9:,10:,11:,
-    #           12:,13:,14:,15:,16:,17:,18:,19:,20:,21:,
-    #           31:,32:,33:,34:,35:,36:,37:,38:,39:,40:,
-    #           41:,42:,43:,44:,45:,46:,
-    #           51:,52:,53:,54:,
-    #           55:,56:,57:,58:,
-    #           59:,60:,61:,62:,
-    #           63:,64:}
-    #     return hd[obj_id]
-
     obj_prop = pd.DataFrame(columns = ['ball_id','ball_name','width','height','stiffness','mass','contents'])
     for key in ballname.keys():
         obj_prop = obj_prop.append({'ball_id':key,
@@ -188,29 +165,11 @@ def property_df():
     cnt_tps = obj_prop['contents'].unique()
     obj_prop['contents_fine_label'] = [np.where(obj_prop['contents'].iloc[i]==cnt_tps)[0].item() \
                                      for i in range(len(obj_prop))]
-    # cnt_tps = pd.unique([i[:4] for i in cnt_tps])
-    # obj_prop['contents_rough_label'] = [np.where(cnt_tps==obj_prop['contents'].iloc[i][:4])[0].item() \
-    #                                     for i in range(len(obj_prop))]
     obj_prop['contents_binary_label'] = [(i is not None) for i in obj_prop['contents']]
 
     #scaling labels, easy to invert later if necessary
     for col in ['width','height','stiffness','mass']:
         obj_prop[col] /= obj_prop[col].max()
-
-    # if class_type == 'cluster':
-    #     # do some sort of cluster
-    #     kmeans = KMeans(
-    #             init="random",
-    #             n_clusters=10,
-    #             n_init=20,
-    #             max_iter=300,
-    #             random_state=0
-    #         )
-    #     for att in ['sq_size','pr_size','mass','stiffness']:
-    #         kmeans.fit(obj_prop[att].values.reshape(-1,1))
-    #         obj_prop[f'{att}_cluster_label'] = kmeans.labels_
-    #         obj_prop[f'{att}_cluster_mean']=kmeans.cluster_centers_[kmeans.labels_]
-    #     obj_prop['index_ball']=obj_prop.index
 
     return obj_prop.set_index('ball_id')
 

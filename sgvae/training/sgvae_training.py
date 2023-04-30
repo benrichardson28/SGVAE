@@ -1,7 +1,7 @@
 
 import math
 import torch
-import utils
+import sgvae.utils as utils
 
 def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
     
@@ -95,7 +95,7 @@ def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
 
 def single_pass(FLAGS,X,action_batch,cs,
                 context,style_mu,style_logvar,
-                encoder,decoder,training=True):
+                encoder,decoder=None,training=True):
     #style vars should be updated outside the function
     #UPDATE SO THAT THE STYLE IS NOT SAVED AFTER IT IS USED ONCE
 
@@ -111,7 +111,7 @@ def single_pass(FLAGS,X,action_batch,cs,
     content_logvar = clv.unsqueeze(1).repeat([1,X.size(1),1])
 
     if decoder is None:
-        return sm,slv,cm,clv
+        return sm,slv,cm,clv,None,None
     
     #reparam
     content_latent_embeddings = utils.reparameterize(training=training, mu=content_mu, logvar=content_logvar)   #batch x 4 x 10
@@ -134,13 +134,13 @@ def eval(FLAGS, encoder, decoder, loader, logger, epoch):
             _ = process(FLAGS, data_batch, action_batch, 
                         encoder, decoder, logger)
 
-    logger.finalize_epoch_loss(it+1)
+    logger.finalize_epoch_loss(it+1)  #type: ignore
     logger.logwandb(epoch)
 
 def train_epoch(FLAGS,encoder,decoder,optimizer,
                 train_loader,train_logger,
                 epoch):
-
+    it = 0
     for it, (data_batch, action_batch, _) in enumerate(train_loader):
         # set zero_grad for the optimizer
         optimizer.zero_grad()
@@ -153,7 +153,7 @@ def train_epoch(FLAGS,encoder,decoder,optimizer,
 
         print(f'\r{it}/{len(train_loader)}',end='')
 
-    train_logger.finalize_epoch_loss(it+1)
+    train_logger.finalize_epoch_loss(it+1)   
     train_logger.print_losses()
     if (epoch + 1) % 10:
         train_logger.logwandb(epoch)

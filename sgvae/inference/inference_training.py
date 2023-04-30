@@ -4,9 +4,11 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 import wandb
-import sgvae_training
-import utils
+
 import pdb
+
+import sgvae.training.sgvae_training as sgvae_training
+import sgvae.utils as utils
 
 def gen_latent(FLAGS,loader,encoder,action_names,dataset2build):
     with torch.no_grad():
@@ -75,8 +77,8 @@ def train_model(FLAGS, model, loss_func, train_set, val_set,
     val_loader = DataLoader(val_set,batch_size=FLAGS.batch_size,shuffle=False)
 
     # for training & validation, only use final iteration
-    train_set.set_iteration('last')
-    val_set.set_iteration('last')
+    train_set.iteration('last')
+    val_set.iteration('last')
 
     # training
     # best_train_loss = 10000

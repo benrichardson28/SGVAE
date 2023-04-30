@@ -3,21 +3,18 @@ import os
 import os.path
 import cmd_parser
 import yaml
-import json
 import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from tensorboardX import SummaryWriter
-import inference_training as itr
-import utils
-import logger
 import wandb
-from datetime import datetime
-import networks
+
+from sgvae.networks import Property_model
+import sgvae.inference.inference_training as itr
 
 import pdb
+
+
 def main(inf_config,vae_config):
     if torch.cuda.is_available() and (inf_config.device=='gpu'):
         print('Cuda available; running on gpu.')
@@ -42,13 +39,13 @@ def main(inf_config,vae_config):
                                         'MLE Loss'])
 
     for property in inf_config.test_properties:
-        tr.set_lbl(property)
-        vl.set_lbl(property)
-        ts.set_lbl(property)
+        tr.label(property)
+        vl.label(property)
+        ts.label(property)
 
         if 'contents' in property:
             loss_func = nn.CrossEntropyLoss()
-            class_cnt = tr.get_class_cnt()
+            class_cnt = tr.class_cnt
         else:
             loss_func = nn.MSELoss()
             class_cnt = 1
@@ -63,21 +60,16 @@ def main(inf_config,vae_config):
             wandb.config.update(inf_config,allow_val_change=True)
             wandb.config.update({"property":property,"latent":latent})
 
-            #config.save_path=writer.logdir
-            #inf_config.save_path = os.path.join('runs',config.save_path)
-            #train_loss_logger = losses.vae_loss_logger(config,'Training')
-            #val_loss_logger = losses.vae_loss_logger(config,'Validation')
-
-            tr.set_latent(latent)
-            vl.set_latent(latent)
-            ts.set_latent(latent)
+            tr.latent_type(latent)
+            vl.latent_type(latent)
+            ts.latent_type(latent)
 
             inf_config.save_path = os.path.join(base_path,'models',
                                                 f'{property}_{latent}')
 
             if latent=='content': dim = 2*vae_config.content_dim
             if latent=='style': dim = 2*vae_config.style_dim
-            model = networks.Property_model(z_dim=dim, num_classes=class_cnt).to(inf_config.device)
+            model = Property_model(z_dim=dim, num_classes=class_cnt).to(inf_config.device)
             optimizer = optim.Adam(
                 list(model.parameters()),
                 lr=inf_config.initial_learning_rate,
@@ -91,7 +83,7 @@ def main(inf_config,vae_config):
 
             for iter in range(tr.sequence_len):
                 for d_set,d_name in zip([tr,vl,ts],['Train','Val','Test']):
-                    d_set.set_iteration(iter)
+                    d_set.iteration(iter)
                     loss = itr.eval_model(inf_config,best_model,loss_func,d_set)
                     res_row = {'Property':property,'Latent Type':latent,
                                'Iteration':iter,'Dataset Type':d_name,

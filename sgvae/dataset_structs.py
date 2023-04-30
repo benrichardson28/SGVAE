@@ -7,14 +7,14 @@ Created on Mon Apr  4 14:09:21 2022
 """
 import os.path
 import random
-import torch
-from torch.utils.data import Dataset
-#import torchvision.transforms as transforms
-import pdb
 import pandas as pd
 import numpy as np
-from property_maps import property_df,get_num_classes
-#import matplotlib.pyplot as plt
+import torch
+from torch.utils.data import Dataset
+
+from sgvae.property_maps import property_df,get_num_classes
+
+import pdb
 
 
 class tactile_explorations(Dataset):
@@ -187,35 +187,51 @@ def data_char(dataframe,data_type):
 
     return mu,std,mn,rng
 
-class full_classification(tactile_explorations):
-    def __init__(self, train=True, transform=None, dataset='all', action_select=None):
-        super().__init__(train, transform, dataset, action_select)
+# class full_classification(tactile_explorations):
+#     def __init__(self, FLAGS, train=True, transform=None, dataset='all', action_select=None):
+#         super().__init__(FLAGS, train, dataset, action_select)
+#         self.transform = compute_transform(self.df)
+#         self.data = self.apply_transform()
+#         self.property_values = property_df()
 
-        self.property_values = property_df()
+#     def __getitem__(self, index):
+#         ball_id = int(self.df.iloc[index]['object'])
 
-    def __getitem__(self, index):
-        ball_id = int(self.df.iloc[index]['object'])
+#         label = self._label
+#         if 'contents' in label:
+#            label = f'{label}_label'
+#         #elif self.label in ['sq_size','pr_size','mass','stiffness']:
+#         #    label = f'{self.label}_cluster_label'
+#         #else: raise ValueError()
+#         prop = self.property_values.loc[ball_id][label]
 
-        label = self.label
-        if 'contents' in label:
-           label = f'{label}_label'
-        #elif self.label in ['sq_size','pr_size','mass','stiffness']:
-        #    label = f'{self.label}_cluster_label'
-        #else: raise ValueError()
-        prop = self.property_values.loc[ball_id][label]
+#         return self.data[index], self.one_hot_action[index], ball_id, prop
 
-        return self.data[index], self.one_hot_action[index], ball_id, prop
+#     @property
+#     def label(self):
+#         return self._label
+#     @label.setter
+#     def label(self,label):
+#         if label not in ['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','ball_id','contents_binary']:
+#             raise ValueError(f"Must be in {['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','ball_id','contents_binary']}.")
+#         self._label = label
 
-    def set_label(self,label):
-        if label not in ['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','ball_id','contents_binary']:
-            raise ValueError(f"Must be in {['sq_size','pr_size','mass','stiffness','contents_fine','contents_rough','ball_id','contents_binary']}.")
-        self.label = label
-
-    def get_class_cnt(self):
-        return get_num_classes(self.label,self.property_values)
+#     @property
+#     def class_cnt(self):
+#         return get_num_classes(self.label,self.property_values)
 
 
 class latent_representations(Dataset):
+    """Dataset for storing latent representations of samples in a 
+    trained model. The dataset is initialized empty and can be added to
+    using the available methods. 
+
+    :param int FLAGS.action_repetitions: The number of time each action 
+    is repeated in a training sequence.
+    :param int FLAGS.style_dim: The dimensionality of the style latent space.
+    """
+
+
     def __init__(self, FLAGS):
         self.sequence_len = FLAGS.action_repetitions*4
         self.style = (FLAGS.style_dim > 0)
@@ -235,14 +251,14 @@ class latent_representations(Dataset):
     def __getitem__(self, index):
         row = self.data.iloc[index]
 
-        feats = torch.squeeze(row[f'{self.ltnt_type} {self.iter}']).float()
+        feats = torch.squeeze(row[f'{self._latent_type} {self._iter}']).float()
         ball_ids = row['object']
 
-        labels = torch.tensor(row[self.label]).float()
-        if 'contents' in self.label:
+        labels = torch.tensor(row[self._label]).float()
+        if 'contents' in self._label:
             labels = labels.long()
 
-        actions = row[f'action {self.iter}']
+        actions = row[f'action {self._iter}']
         # np.array([np.where(a==self.action_list)[0].item() for a in row[f'action {iter}']])
 
         return feats,actions,ball_ids,labels
@@ -261,30 +277,42 @@ class latent_representations(Dataset):
     def append_row(self):
         self.data = self.data.append(self.row,ignore_index=True)
 
-    def set_lbl(self,label):
-        if label not in self.property_values.columns[1:]:
+    @property
+    def label(self):
+        return self._label
+    @label.setter
+    def label(self, value):
+        if value not in self.property_values.columns[1:]:
             raise ValueError(f"Must be in {self.property_values.columns[1:]}.")
-        self.label = label
+        self._label = value
 
-    def set_latent(self,ltnt_type):
-        if ltnt_type not in ['content','style']:
+    @property
+    def latent_type(self):
+        return self._latent
+    @latent_type.setter
+    def latent_type(self, value):
+        if value not in ['content','style']:
             raise ValueError('Must be "content" or "style".')
-        self.ltnt_type = ltnt_type
+        self._latent_type = value
 
-    def set_iteration(self,iter):
+    @property
+    def iteration(self):
+        return self._iter
+    @iteration.setter
+    def iteration(self,iter):
         if iter == 'last':
-            self.iter = self.sequence_len - 1
+            self._iter = self.sequence_len - 1
         elif (iter < 0) or (iter > self.sequence_len - 1):
             raise ValueError
         else:
-            self.iter = iter
+            self._iter = iter
 
-    def get_class_cnt(self):
+    @property
+    def class_cnt(self):
         return get_num_classes(self.label,property_df())
 
-
-
-    def get_cols(self):
+    @property
+    def data_columns(self):
         return self.data.columns
 
     # def apply_transform(self):
