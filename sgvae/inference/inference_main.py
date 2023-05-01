@@ -1,7 +1,6 @@
 import sys
 import os
 import os.path
-import cmd_parser
 import yaml
 import pandas as pd
 import torch
@@ -10,6 +9,7 @@ import torch.optim as optim
 import wandb
 
 from sgvae.networks import Property_model
+import sgvae.cmd_parser as cmd_parser
 import sgvae.inference.inference_training as itr
 
 import pdb

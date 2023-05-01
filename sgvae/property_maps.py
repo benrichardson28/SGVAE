@@ -153,15 +153,18 @@ def property_df():
                 95:'bearings', 96:'popcorn', 97:'popcorn'
                 }
 
-    obj_prop = pd.DataFrame(columns = ['ball_id','ball_name','width','height','stiffness','mass','contents'])
+
+    obj_prop = []
     for key in ballname.keys():
-        obj_prop = obj_prop.append({'ball_id':key,
-                                    'ball_name':ballname[key],
-                                    'width':width[key],
-                                    'height':height[key],
-                                    'stiffness':stiffness[key],
-                                    'mass':mass[key],
-                                    'contents':contents[key]},ignore_index=True)
+        obj_prop.append({'ball_id':key,
+                         'ball_name':ballname[key],
+                         'width':width[key],
+                         'height':height[key],
+                         'stiffness':stiffness[key],
+                         'mass':mass[key],
+                         'contents':contents[key]})
+    obj_prop = pd.DataFrame(obj_prop).to_csv('object_properties.csv')
+    return None
     cnt_tps = obj_prop['contents'].unique()
     obj_prop['contents_fine_label'] = [np.where(obj_prop['contents'].iloc[i]==cnt_tps)[0].item() \
                                      for i in range(len(obj_prop))]
