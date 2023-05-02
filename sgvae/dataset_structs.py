@@ -18,14 +18,14 @@ import pdb
 
 
 class tactile_explorations(Dataset):
-    def __init__(self, FLAGS, train=True, dataset='all',action_select=None):
+    def __init__(self, config, train=True, dataset='all',action_select=None):
         ds = 'train_df' if train else 'test_df'
         if dataset=='orig':
             ds = ds+'_objs'
         if dataset=='new':
             ds = ds+'_newobjs'
         #path2data = f'data/{ds}'
-        df = pd.read_pickle(os.path.join(FLAGS.data_path,ds))
+        df = pd.read_pickle(os.path.join(config.data_path,ds))
 
         if action_select is not None:
             df = df[df['action']==action_select]
@@ -41,7 +41,7 @@ class tactile_explorations(Dataset):
         for i,act in enumerate(self.act_list):
             self.one_hot_action[(self.df['action']==act).values,i]=1.0
 
-        self.repeats = FLAGS.action_repetitions
+        self.repeats = config.action_repetitions
         # if transform=='compute':
         #     self.transform = compute_transform(self.df)
         #     self.data = self.apply_transform()
@@ -188,8 +188,8 @@ def data_char(dataframe,data_type):
     return mu,std,mn,rng
 
 # class full_classification(tactile_explorations):
-#     def __init__(self, FLAGS, train=True, transform=None, dataset='all', action_select=None):
-#         super().__init__(FLAGS, train, dataset, action_select)
+#     def __init__(self, config, train=True, transform=None, dataset='all', action_select=None):
+#         super().__init__(config, train, dataset, action_select)
 #         self.transform = compute_transform(self.df)
 #         self.data = self.apply_transform()
 #         self.property_values = property_df()
@@ -226,15 +226,15 @@ class latent_representations(Dataset):
     trained model. The dataset is initialized empty and can be added to
     using the available methods. 
 
-    :param int FLAGS.action_repetitions: The number of time each action 
+    :param int config.action_repetitions: The number of time each action 
     is repeated in a training sequence.
-    :param int FLAGS.style_dim: The dimensionality of the style latent space.
+    :param int config.style_dim: The dimensionality of the style latent space.
     """
 
 
-    def __init__(self, FLAGS):
-        self.sequence_len = FLAGS.action_repetitions*4
-        self.style = (FLAGS.style_dim > 0)
+    def __init__(self, config):
+        self.sequence_len = config.action_repetitions*4
+        self.style = (config.style_dim > 0)
         self.property_values = property_df()
         columns = [f'content {i}' for i in range(self.sequence_len)]
         if self.style:

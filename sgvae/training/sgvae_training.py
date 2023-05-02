@@ -3,7 +3,7 @@ import math
 import torch
 import sgvae.utils as utils
 
-def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
+def loss(config,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
     
     # KL for multi-var gaussians. 
     # For standard VAE, use KL(estimate || true posterior)
@@ -13,8 +13,8 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
         kl = 0.5*( (lv2-lv1+(lv1-lv2).exp() \
                     +(m2-m1).pow(2)/lv2.exp()).sum(dim=1)  \
                     - m1.shape[-1] )
-        if FLAGS.reduction=="sum": return kl.sum()
-        elif FLAGS.reduction=="mean": return kl.mean()
+        if config.reduction=="sum": return kl.sum()
+        elif config.reduction=="mean": return kl.mean()
         return kl
     
     # define standard normal prior
@@ -27,10 +27,10 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
         prior_mu,prior_logvar = prior
     content_KL = multi_var_KL(cm,clv,prior_mu,prior_logvar)
 
-    # if FLAGS.reduction=='sum':
+    # if config.reduction=='sum':
     #     style_kl_divergence_loss = 0.5 * ( - 1 - slv + sm.pow(2) + slv.exp()).sum()
     #     content_kl_divergence_loss = 0.5 * ( - 1 - clv + cm.pow(2) + clv.exp()).sum()
-    # elif FLAGS.reduction=='mean':
+    # elif config.reduction=='mean':
     #     style_kl_divergence_loss = 0.5 * ( - 1 - slv + sm.pow(2) + slv.exp()).sum(dim=1).mean()
     #     content_kl_divergence_loss = 0.5 * ( - 1 - clv + cm.pow(2) + clv.exp()).sum(dim=1).mean()
     #BUILD IN THE KL BETWEEN the current content and the previous content (context)
@@ -42,26 +42,26 @@ def loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
     scale_x = (torch.exp(logvar_x) + 1e-12)#**0.5
     mean, var = torch.squeeze(mu_x,1),torch.squeeze(scale_x)
     logl = -0.5 * ((X - mean) ** 2 / var + torch.log(var) + math.log(2 * math.pi))
-    weight = var.detach() ** FLAGS.beta_NLL
+    weight = var.detach() ** config.beta_NLL
 
-    if FLAGS.reduction=='sum':
+    if config.reduction=='sum':
         logp_batch = torch.sum(logl * weight, axis=-1).sum(-1)
         reconstruction_proba = logp_batch.sum()
-    elif FLAGS.reduction=='mean':
+    elif config.reduction=='mean':
         logp_batch = torch.sum(logl * weight, axis=-1).sum(-1)
         if style_weights is not None:
             logp_batch *= style_weights
         reconstruction_proba = logp_batch.mean(-1).mean()
   
-    total_KL = FLAGS.style_coef*style_KL + FLAGS.content_coef*content_KL
-    elbo = (reconstruction_proba - FLAGS.beta_VAE * total_KL)
+    total_KL = config.style_coef*style_KL + config.content_coef*content_KL
+    elbo = (reconstruction_proba - config.beta_VAE * total_KL)
 
     return elbo, reconstruction_proba, style_KL, content_KL
 
-def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
-    context, style_mu, style_logvar = utils.cNs_init(FLAGS,X.shape[0])
-    X = X.to(FLAGS.device)
-    action_batch=action_batch.to(FLAGS.device)
+def process(config, X, action_batch, encoder, decoder, loss_logger):
+    context, style_mu, style_logvar = utils.cNs_init(config,X.shape[0])
+    X = X.to(config.device)
+    action_batch=action_batch.to(config.device)
 
     total_elbo = 0
     # context loop
@@ -69,31 +69,31 @@ def process(FLAGS, X, action_batch, encoder, decoder, loss_logger):
     #pdb.set_trace()
     for cs in range(X.size(1)):
         #pass in first sample -> get content and style
-        sm,slv,cm,clv,mu_x,logvar_x = single_pass(FLAGS,X,action_batch,cs,
+        sm,slv,cm,clv,mu_x,logvar_x = single_pass(config,X,action_batch,cs,
                                                   context,style_mu,style_logvar,
                                                   encoder,decoder)
 
         style_weights = None
-        if FLAGS.weight_style:
+        if config.weight_style:
             style_weights = torch.ones(X.size(0),X.size(1))
-            style_weights = style_weights.to(FLAGS.device)
+            style_weights = style_weights.to(config.device)
             style_weights[:,:-1-cs] *= 0.5
 
         prior = None
-        if FLAGS.update_prior:
+        if config.update_prior:
             prior = torch.tensor_split(context,2,dim=1)
 
         elbo, mle, kl_style, \
-            kl_content = loss(FLAGS,cm,clv,sm,slv,mu_x,logvar_x,X,prior,style_weights)
+            kl_content = loss(config,cm,clv,sm,slv,mu_x,logvar_x,X,prior,style_weights)
         total_elbo += elbo*1.
         loss_logger.update_epoch_loss(elbo,mle,kl_content,kl_style,cs)
 
         # prepare latents for next pass: create context
         context = torch.cat([cm,clv],dim=1)
 
-    return total_elbo / (FLAGS.action_repetitions*4)
+    return total_elbo / (config.action_repetitions*4)
 
-def single_pass(FLAGS,X,action_batch,cs,
+def single_pass(config,X,action_batch,cs,
                 context,style_mu,style_logvar,
                 encoder,decoder=None,training=True):
     #style vars should be updated outside the function
@@ -104,7 +104,7 @@ def single_pass(FLAGS,X,action_batch,cs,
 
     sm,slv,cm,clv = encoder(X[:,-1-cs],context)
     #add on other styles, concat content
-    if FLAGS.keep_style:
+    if config.keep_style:
         style_mu[:,-1-cs] = sm.detach().clone()
         style_logvar[:,-1-cs] = slv.detach().clone()
     content_mu = cm.unsqueeze(1).repeat([1,X.size(1),1])
@@ -126,27 +126,27 @@ def single_pass(FLAGS,X,action_batch,cs,
     return sm,slv,cm,clv,mu_x,logvar_x
 
 
-def eval(FLAGS, encoder, decoder, loader, logger, epoch):
+def eval(config, encoder, decoder, loader, logger, epoch):
 
     with torch.no_grad():
         for it, (data_batch, action_batch, _) in enumerate(loader):
 
-            _ = process(FLAGS, data_batch, action_batch, 
+            _ = process(config, data_batch, action_batch, 
                         encoder, decoder, logger)
 
     logger.finalize_epoch_loss(it+1)  #type: ignore
     logger.logwandb(epoch)
 
-def train_epoch(FLAGS,encoder,decoder,optimizer,
+def train_epoch(config,encoder,decoder,optimizer,
                 train_loader,train_logger,
                 epoch):
     it = 0
     for it, (data_batch, action_batch, _) in enumerate(train_loader):
         # set zero_grad for the optimizer
         optimizer.zero_grad()
-        X = data_batch.to(FLAGS.device).detach().clone()
+        X = data_batch.to(config.device).detach().clone()
 
-        elbo = process(FLAGS, X, action_batch,
+        elbo = process(config, X, action_batch,
                         encoder, decoder, train_logger)
         (-elbo).backward()
         optimizer.step()

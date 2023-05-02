@@ -8,11 +8,11 @@ import pdb
 import sgvae.training.sgvae_training as sgvae_training
 import sgvae.utils as utils
 
-def gen_latent(FLAGS,loader,encoder,action_names,dataset2build):
+def gen_latent(config,loader,encoder,action_names,dataset2build):
     with torch.no_grad():
         for _, (X, action_batch, obj_batch) in enumerate(loader):
-            X = X.to(FLAGS.device)
-            context,style_mu,style_logvar = utils.cNs_init(FLAGS,X.shape[0])
+            X = X.to(config.device)
+            context,style_mu,style_logvar = utils.cNs_init(config,X.shape[0])
             dataset2build.start_row(obj_batch)
             for i in range(X.size(1)):
                 sm,slv,cm,clv,=sgvae_training.single_pass(X, action_batch, i, context,
@@ -53,12 +53,12 @@ def latent_dataset_generator(inf_config,vae_config):
 
     return inf_tr_set,inf_v_set,inf_ts_set
 
-def process_epoch(FLAGS, model, loader, loss_func, optimizer=None):
+def process_epoch(config, model, loader, loss_func, optimizer=None):
     total_loss = 0
     for data,_,_,labels in loader:
   
-        pred = model(data.to(FLAGS.device))
-        batch_loss = loss_func(pred,labels.to(FLAGS.device))
+        pred = model(data.to(config.device))
+        batch_loss = loss_func(pred,labels.to(config.device))
 
         if optimizer:
             optimizer.zero_grad()
@@ -69,10 +69,10 @@ def process_epoch(FLAGS, model, loader, loss_func, optimizer=None):
     return total_loss.detach().cpu() / len(loader)
 
 
-def train_model(FLAGS, model, loss_func, train_set, val_set,
+def train_model(config, model, loss_func, train_set, val_set,
                 optimizer):
-    train_loader = DataLoader(train_set,batch_size=FLAGS.batch_size,shuffle=True)
-    val_loader = DataLoader(val_set,batch_size=FLAGS.batch_size,shuffle=False)
+    train_loader = DataLoader(train_set,batch_size=config.batch_size,shuffle=True)
+    val_loader = DataLoader(val_set,batch_size=config.batch_size,shuffle=False)
 
     # for training & validation, only use final iteration
     train_set.iteration('last')
@@ -84,13 +84,13 @@ def train_model(FLAGS, model, loss_func, train_set, val_set,
     best_val_loss = 10000
     best_model = copy.deepcopy(model)
 
-    for epoch in range(FLAGS.end_epoch):
+    for epoch in range(config.end_epoch):
         print('')
         print('Epoch #' + str(epoch) + '......................................................................')
 
-        train_loss = process_epoch(FLAGS, model, train_loader, loss_func, optimizer)
+        train_loss = process_epoch(config, model, train_loader, loss_func, optimizer)
         with torch.no_grad():
-            val_loss = process_epoch(FLAGS, model, val_loader, loss_func)
+            val_loss = process_epoch(config, model, val_loader, loss_func)
         wandb.log({'Training Loss':train_loss,'Validation Loss':val_loss},step=epoch)
 
         if val_loss < best_val_loss:
@@ -99,12 +99,12 @@ def train_model(FLAGS, model, loss_func, train_set, val_set,
             best_val_loss = val_loss
             best_model = copy.deepcopy(model)
 
-    utils.save_inf_checkpoint(FLAGS.save_path,best_epoch,best_model,optimizer)
+    utils.save_inf_checkpoint(config.save_path,best_epoch,best_model,optimizer)
 
     return best_model
 
-def eval_model(FLAGS, model, loss_func, dataset):
+def eval_model(config, model, loss_func, dataset):
     with torch.no_grad():
-        loader = DataLoader(dataset,batch_size=FLAGS.batch_size,shuffle=False)
-        loss = process_epoch(FLAGS, model, loader, loss_func)
+        loader = DataLoader(dataset,batch_size=config.batch_size,shuffle=False)
+        loss = process_epoch(config, model, loader, loss_func)
     return loss

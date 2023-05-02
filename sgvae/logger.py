@@ -3,8 +3,8 @@ import wandb
 
 
 class vae_loss_logger():
-    def __init__(self,FLAGS,stage):
-        self.iterations = FLAGS.action_repetitions * 4
+    def __init__(self,config,stage):
+        self.iterations = config.action_repetitions * 4
         self.reset_epoch_loss()
         self.stage = stage
         #self.table = wandb.Table(columns=["Total","ELBO","NLL","KL Content","KL Style"])

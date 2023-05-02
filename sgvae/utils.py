@@ -11,35 +11,35 @@ import sgvae.dataset_structs as dst
 import pdb
 
 
-def create_vae_models(FLAGS):
+def create_vae_models(config):
     """
     model definitions
     """
-    encoder = Encoder(style_dim=FLAGS.style_dim, 
-                      content_dim=FLAGS.content_dim,
-                      in_channels = FLAGS.in_channels,
-                      hidden_dims = FLAGS.hidden_dims,
-                      kernels = FLAGS.kernels,
-                      strides = FLAGS.strides,
-                      paddings = FLAGS.paddings,
-                    )#remove_context = FLAGS.update_prior)
+    encoder = Encoder(style_dim=config.style_dim, 
+                      content_dim=config.content_dim,
+                      in_channels = config.in_channels,
+                      hidden_dims = config.hidden_dims,
+                      kernels = config.kernels,
+                      strides = config.strides,
+                      paddings = config.paddings,
+                    )#remove_context = config.update_prior)
     #encoder.apply(weights_init)
-    decoder = Decoder(style_dim=FLAGS.style_dim, 
-                      content_dim=FLAGS.content_dim,
+    decoder = Decoder(style_dim=config.style_dim, 
+                      content_dim=config.content_dim,
                       data_len = encoder.data_len,
-                      hidden_dims = FLAGS.hidden_dims,
-                      out_channels = FLAGS.in_channels,
-                      kernels = FLAGS.kernels,
-                      strides = FLAGS.strides,
-                      paddings = FLAGS.paddings)
+                      hidden_dims = config.hidden_dims,
+                      out_channels = config.in_channels,
+                      kernels = config.kernels,
+                      strides = config.strides,
+                      paddings = config.paddings)
     #decoder.apply(weights_init)
     return encoder,decoder 
 
-def create_vae_optimizer(FLAGS,encoder,decoder):
+def create_vae_optimizer(config,encoder,decoder):
     optimizer = optim.Adam(
         list(encoder.parameters()) + list(decoder.parameters()),
-        lr=FLAGS.initial_learning_rate,
-        betas=(FLAGS.beta_1, FLAGS.beta_2),
+        lr=config.initial_learning_rate,
+        betas=(config.beta_1, config.beta_2),
         eps=10e-4
     )
     return optimizer
@@ -47,14 +47,14 @@ def create_vae_optimizer(FLAGS,encoder,decoder):
 def create_vae_scheduler():
     return NotImplementedError
 
-def create_vae_datasets(FLAGS,indices=None,test=False):
-    train_set = dst.tactile_explorations(FLAGS,train=True,
-                                         dataset=FLAGS.dataset)
+def create_vae_datasets(config,indices=None,test=False):
+    train_set = dst.tactile_explorations(config,train=True,
+                                         dataset=config.dataset)
     validation_set = copy.deepcopy(train_set)
     if indices is None:
         train_indices, val_indices = dst.split_indices(train_set,
-                                                       FLAGS.split_ratio,
-                                                       FLAGS.dataset)
+                                                       config.split_ratio,
+                                                       config.dataset)
     else:
         train_indices, val_indices = indices
     train_set.set_indices(train_indices)
@@ -64,8 +64,8 @@ def create_vae_datasets(FLAGS,indices=None,test=False):
 
     test_set = None
     if test:
-        test_set = dst.tactile_explorations(FLAGS,train=False,
-                                            dataset=FLAGS.dataset)
+        test_set = dst.tactile_explorations(config,train=False,
+                                            dataset=config.dataset)
         test_set.set_transform(train_set.get_transform())
 
     return train_set, validation_set, [train_indices,val_indices], test_set
@@ -76,11 +76,11 @@ def create_inference_datasets(config):
     test_set = dst.latent_representations(config)
     return train_set,validation_set,test_set
 
-def cNs_init(FLAGS,size):
-    act_num = 4 * FLAGS.action_repetitions
-    context = torch.zeros(size,2*FLAGS.content_dim).to(FLAGS.device)
-    style_mu = torch.zeros(size,act_num,FLAGS.style_dim).to(FLAGS.device)
-    style_logvar = torch.zeros(size,act_num,FLAGS.style_dim).to(FLAGS.device)
+def cNs_init(config,size):
+    act_num = 4 * config.action_repetitions
+    context = torch.zeros(size,2*config.content_dim).to(config.device)
+    style_mu = torch.zeros(size,act_num,config.style_dim).to(config.device)
+    style_logvar = torch.zeros(size,act_num,config.style_dim).to(config.device)
     return context, style_mu, style_logvar
 
 def reparameterize(training, mu, logvar):
