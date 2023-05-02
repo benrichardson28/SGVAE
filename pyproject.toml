@@ -1,14 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
+[project]
+name = "sgvae"
+version = '0.0.1'
+description = "A sequential group variational autoencoder for learning object latent representations as a robot uses successive exploratory procedures. Perform training and inference on learned latent spaces."
+dynamic = ["readme"]
+requires-python = ">=3.7"
 
+dependencies = [
+    "ConfigArgParse",
+    "numpy>=1.21",
+    "pandas",
+    "scipy==1.6",
+    "torch>=1.7",
+    "wandb",
+    "matplotlib",
+]
 
+[project.scripts]
+sgvae_train = "sgvae.training.sgvae_main:launcher"
+sgvae_inference = "sgvae.inference.inference_main:launcher"
 
+[tool.setuptools.dynamic]
+readme = {file = "README.md"}
 
-
-requirements
-
-pandas (2.0.1)
-numpy (>=1.21.0)
-torch (2.0.0)
-wandb (0.15.0)
-configargparse (1.5.3)
-matplotlib (3.7.1)
+[tool.setuptools]
+packages = ["sgvae"]
