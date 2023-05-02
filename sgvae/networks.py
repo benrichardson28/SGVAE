@@ -2,12 +2,27 @@ import torch
 import torch.nn as nn
 
 class Encoder(nn.Module):
-    def __init__(self, style_dim, content_dim,**kwargs):
+    """ Encoder module for embedding tactile data in latent space.
+    
+    :param int style_dim: Size of style latent space.
+    :param int content_dim: Size of content latent space.
+    :param int data_len: Length of data (used for computing final conv output size)
+    
+    :param \**kwargs:
+        See below
+
+    :Keyword Arguments:
+        * in_channels (int) -- Number of input channels
+        * kernels (list) -- Convolution kernel sizes for each layer.
+        * strides (list) -- Stride lengths for kernels at each layer.
+        * paddings (list) -- Padding to apply to input for each layer.
+        * hidden_dims (list) -- Number of kernels to use at each layer.
+    """
+    def __init__(self, style_dim, content_dim,data_len=400,**kwargs):
         super(Encoder, self).__init__()
 
         in_channels = kwargs['in_channels']
         modules = []
-        cos = 400
         for k,s,p,h_dim in zip(kwargs['kernels'],kwargs['strides'],kwargs['paddings'],kwargs['hidden_dims']):
             modules.append(
                 nn.Sequential(
@@ -18,10 +33,10 @@ class Encoder(nn.Module):
             )
             in_channels = h_dim
             self.inner_size = h_dim
-            cos = 1+int((cos-k+2*p)/s)
+            data_len = 1+int((data_len-k+2*p)/s)
         self.conv = nn.Sequential(*modules)
-        self.cos = cos
-        in_features = kwargs['hidden_dims'][-1]*cos + 2*content_dim
+        self.data_len = data_len
+        in_features = kwargs['hidden_dims'][-1]*data_len + 2*content_dim
         #if not kwargs['remove_context']: in_features += 2*content_dim
 
         mlp_sz = 100
@@ -54,7 +69,22 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, style_dim, content_dim, **kwargs):
+    """ Decoder module for reconstructing tactile data from latent representation.
+    
+    :param int style_dim: Size of style latent space.
+    :param int content_dim: Size of content latent space.
+    
+    :param \**kwargs:
+        See below
+
+    :Keyword Arguments:
+        * in_channels (int) -- Number of input channels
+        * kernels (list) -- Convolution kernel sizes for each layer.
+        * strides (list) -- Stride lengths for kernels at each layer.
+        * paddings (list) -- Padding to apply to input for each layer.
+        * hidden_dims (list) -- Number of kernels to use at each layer.
+    """
+    def __init__(self, style_dim, content_dim, data_len, **kwargs):
         super(Decoder, self).__init__()
 
         modules = []
@@ -62,12 +92,12 @@ class Decoder(nn.Module):
         kernels = kwargs['kernels'].copy()
         strides = kwargs['strides'].copy()
         pads = kwargs['paddings'].copy()
-        self.cos = kwargs['cos']
+        self.data_len = kwargs['data_len']
         # self.decoder_input = nn.Linear(style_dim + content_dim + action_dim, hidden_dims[-1] * 4)
         self.decoder_input = nn.Sequential(
             nn.Linear(style_dim + content_dim + 4, 100),
             nn.LeakyReLU(),
-            nn.Linear(100, hidden_dims[-1] * self.cos))
+            nn.Linear(100, hidden_dims[-1] * self.data_len))
         hidden_dims.reverse()
         kernels.reverse()
         strides.reverse()
@@ -86,6 +116,7 @@ class Decoder(nn.Module):
                     nn.LeakyReLU())
             )
         self.decoder = nn.Sequential(*modules)
+
         def create_last_layer():
             final_layer = nn.Sequential(
                     nn.ConvTranspose1d(hidden_dims[-1],
@@ -100,6 +131,7 @@ class Decoder(nn.Module):
                               kernel_size = kernels[-1], padding= 2*pads[-1]),
                     nn.Tanh())
             return final_layer
+        
         self.final_layer_mu = create_last_layer()
         self.final_layer_var = create_last_layer()
 

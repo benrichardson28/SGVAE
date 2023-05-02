@@ -26,12 +26,12 @@ def create_vae_models(FLAGS):
     #encoder.apply(weights_init)
     decoder = Decoder(style_dim=FLAGS.style_dim, 
                       content_dim=FLAGS.content_dim,
+                      data_len = encoder.data_len,
                       hidden_dims = FLAGS.hidden_dims,
                       out_channels = FLAGS.in_channels,
                       kernels = FLAGS.kernels,
                       strides = FLAGS.strides,
-                      paddings = FLAGS.paddings,
-                      cos = encoder.cos)
+                      paddings = FLAGS.paddings)
     #decoder.apply(weights_init)
     return encoder,decoder 
 
@@ -70,10 +70,10 @@ def create_vae_datasets(FLAGS,indices=None,test=False):
 
     return train_set, validation_set, [train_indices,val_indices], test_set
 
-def create_inference_datasets(iters):
-    train_set = dst.latent_representations(iters)
-    validation_set = dst.latent_representations(iters)
-    test_set = dst.latent_representations(iters)
+def create_inference_datasets(config):
+    train_set = dst.latent_representations(config)
+    validation_set = dst.latent_representations(config)
+    test_set = dst.latent_representations(config)
     return train_set,validation_set,test_set
 
 def cNs_init(FLAGS,size):
