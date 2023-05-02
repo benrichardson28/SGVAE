@@ -1,4 +1,6 @@
 __pycache__/*
+*.pyc
+sgvae/__pycache__/*
 *tmp_logs/*
 *runs*/*
 *_results/*
@@ -6,5 +8,4 @@ data/*
 wandb/*
 .vscode/*
 *test*
-*.pyc
-submit_utils/*.txt
+scripts/cluster_utils/*.txt
