@@ -20,7 +20,7 @@ def gen_latent(config,loader,encoder,action_names,dataset2build):
                                                         encoder, None, training=True)
                 cont = torch.cat([cm,clv],dim=1).cpu()
                 styl = torch.cat([sm,slv],dim=1).cpu()
-                act_nms = action_names[torch.where(action_batch[:,-1-i]==1)[-1] % 4]
+                act_nms = action_names[torch.where(action_batch[:,-1-i]==1)[-1] % EXPLORATORY_PROCEDURE_NUM]
                 dataset2build.add_to_row(cont,styl,act_nms,i)
 
                 context = torch.cat([cm,clv],dim=1)

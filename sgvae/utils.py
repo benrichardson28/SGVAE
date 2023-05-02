@@ -12,8 +12,16 @@ import pdb
 
 
 def create_vae_models(config):
-    """
-    model definitions
+    """ Create encoder and decoder modules for VAE.
+
+    :param Namespace config:
+        * style_dim (int) -- Size of style latent space.
+        * content_dim (int) -- Size of content latent space.
+        * in_channels (int) -- Number of channels in the data.
+        * hidden_dims (list) -- Number of kernels to use at each layer.
+        * kernels (list) -- Convolution kernel sizes for each layer.
+        * strides (list) -- Stride lengths for kernels at each layer.
+        * paddings (list) -- Padding to apply to input for each layer.
     """
     encoder = Encoder(style_dim=config.style_dim, 
                       content_dim=config.content_dim,
@@ -77,7 +85,7 @@ def create_inference_datasets(config):
     return train_set,validation_set,test_set
 
 def cNs_init(config,size):
-    act_num = 4 * config.action_repetitions
+    act_num = EXPLORATORY_PROCEDURE_NUM * config.action_repetitions
     context = torch.zeros(size,2*config.content_dim).to(config.device)
     style_mu = torch.zeros(size,act_num,config.style_dim).to(config.device)
     style_logvar = torch.zeros(size,act_num,config.style_dim).to(config.device)

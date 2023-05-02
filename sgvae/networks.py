@@ -78,11 +78,11 @@ class Decoder(nn.Module):
         See below
 
     :Keyword Arguments:
-        * in_channels (int) -- Number of input channels
-        * kernels (list) -- Convolution kernel sizes for each layer.
-        * strides (list) -- Stride lengths for kernels at each layer.
-        * paddings (list) -- Padding to apply to input for each layer.
-        * hidden_dims (list) -- Number of kernels to use at each layer.
+        * out_channels (int) -- Number of output channels at final layer.
+        * kernels (list) -- Convolution kernel sizes for each layer (in reverse).
+        * strides (list) -- Stride lengths for kernels at each layer (in reverse).
+        * paddings (list) -- Padding to apply to input for each layer (in reverse).
+        * hidden_dims (list) -- Number of kernels to use at each layer (in reverse).
     """
     def __init__(self, style_dim, content_dim, data_len, **kwargs):
         super(Decoder, self).__init__()
@@ -95,7 +95,7 @@ class Decoder(nn.Module):
         self.data_len = kwargs['data_len']
         # self.decoder_input = nn.Linear(style_dim + content_dim + action_dim, hidden_dims[-1] * 4)
         self.decoder_input = nn.Sequential(
-            nn.Linear(style_dim + content_dim + 4, 100),
+            nn.Linear(style_dim + content_dim + EXPLORATORY_PROCEDURE_NUM, 100),
             nn.LeakyReLU(),
             nn.Linear(100, hidden_dims[-1] * self.data_len))
         hidden_dims.reverse()

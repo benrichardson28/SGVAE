@@ -4,7 +4,7 @@ import wandb
 
 class vae_loss_logger():
     def __init__(self,config,stage):
-        self.iterations = config.action_repetitions * 4
+        self.iterations = config.action_repetitions * EXPLORATORY_PROCEDURE_NUM
         self.reset_epoch_loss()
         self.stage = stage
         #self.table = wandb.Table(columns=["Total","ELBO","NLL","KL Content","KL Style"])

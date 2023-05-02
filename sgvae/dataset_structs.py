@@ -105,7 +105,9 @@ class tactile_explorations(Dataset):
 
     def random_context_sampler(self):
         df = self.df
-        self.context_ixs=torch.zeros(df.shape[0],4*self.repeats-1,dtype=torch.long)
+        self.context_ixs=torch.zeros(df.shape[0],
+                                     EXPLORATORY_PROCEDURE_NUM*self.repeats-1,
+                                     dtype=torch.long)
         for obj in df['object'].unique():
             tdf = df[(df['object'] == obj)]
 
@@ -233,7 +235,7 @@ class latent_representations(Dataset):
 
 
     def __init__(self, config):
-        self.sequence_len = config.action_repetitions*4
+        self.sequence_len = config.action_repetitions*EXPLORATORY_PROCEDURE_NUM
         self.style = (config.style_dim > 0)
         self.property_values = property_df()
         columns = [f'content {i}' for i in range(self.sequence_len)]

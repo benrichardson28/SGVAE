@@ -91,7 +91,7 @@ def process(config, X, action_batch, encoder, decoder, loss_logger):
         # prepare latents for next pass: create context
         context = torch.cat([cm,clv],dim=1)
 
-    return total_elbo / (config.action_repetitions*4)
+    return total_elbo / (config.action_repetitions * EXPLORATORY_PROCEDURE_NUM)
 
 def single_pass(config,X,action_batch,cs,
                 context,style_mu,style_logvar,
