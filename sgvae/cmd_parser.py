@@ -78,6 +78,7 @@ def parse_inference_config(argv=None):
                         help='config file')
 
     parser.add_argument('--device',type=str, default='gpu',choices=['gpu','cpu'])
+    parser.add_argument('--property_path', type=str, default="~/Projects/SGVAE/sequential-group-vae/data/")
     parser.add_argument('--save_path', type=str, default=0)
     parser.add_argument('--vae_model_path', type=str)
     parser.add_argument('--vae_checkpoint', type=int)

@@ -2,6 +2,7 @@
 import math
 import torch
 import sgvae.utils as utils
+from sgvae import EXPLORATORY_PROCEDURE_NUM
 
 def loss(config,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
     
@@ -44,14 +45,15 @@ def loss(config,cm,clv,sm,slv,mu_x,logvar_x,X,prior=None,style_weights=None):
     logl = -0.5 * ((X - mean) ** 2 / var + torch.log(var) + math.log(2 * math.pi))
     weight = var.detach() ** config.beta_NLL
 
+    logp_batch = torch.sum(logl * weight, dim=-1).sum(-1)
     if config.reduction=='sum':
-        logp_batch = torch.sum(logl * weight, axis=-1).sum(-1)
         reconstruction_proba = logp_batch.sum()
     elif config.reduction=='mean':
-        logp_batch = torch.sum(logl * weight, axis=-1).sum(-1)
         if style_weights is not None:
             logp_batch *= style_weights
         reconstruction_proba = logp_batch.mean(-1).mean()
+    else:
+        raise ValueError("'reduction' should be 'sum' or 'mean'")
   
     total_KL = config.style_coef*style_KL + config.content_coef*content_KL
     elbo = (reconstruction_proba - config.beta_VAE * total_KL)

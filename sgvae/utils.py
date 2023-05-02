@@ -7,10 +7,13 @@ import torch.optim as optim
 
 from sgvae.networks import Encoder,Decoder
 import sgvae.dataset_structs as dst
+from sgvae import EXPLORATORY_PROCEDURE_NUM
 
 import pdb
 
 
+
+# Model and training procedure
 def create_vae_models(config):
     """ Create encoder and decoder modules for VAE.
 
@@ -55,6 +58,9 @@ def create_vae_optimizer(config,encoder,decoder):
 def create_vae_scheduler():
     return NotImplementedError
 
+
+
+# Dataset creators
 def create_vae_datasets(config,indices=None,test=False):
     train_set = dst.tactile_explorations(config,train=True,
                                          dataset=config.dataset)
@@ -78,12 +84,15 @@ def create_vae_datasets(config,indices=None,test=False):
 
     return train_set, validation_set, [train_indices,val_indices], test_set
 
-def create_inference_datasets(config):
-    train_set = dst.latent_representations(config)
-    validation_set = dst.latent_representations(config)
-    test_set = dst.latent_representations(config)
-    return train_set,validation_set,test_set
+def create_inference_datasets(action_repetitions,style_dim,prop_path):
+    trn = dst.latent_representations(action_repetitions,style_dim,prop_path)
+    val = dst.latent_representations(action_repetitions,style_dim,prop_path)
+    tst = dst.latent_representations(action_repetitions,style_dim,prop_path)
+    return trn,val,tst
 
+
+
+# Vae training and inference functions
 def cNs_init(config,size):
     act_num = EXPLORATORY_PROCEDURE_NUM * config.action_repetitions
     context = torch.zeros(size,2*config.content_dim).to(config.device)
@@ -99,6 +108,8 @@ def reparameterize(training, mu, logvar):
     else:
         return mu
 
+
+# Checkpointing functions
 def save_vae_checkpoint(folder,epoch,wandb_id,
                         encoder,decoder,
                         optimizer=None,scheduler=None
@@ -130,7 +141,8 @@ def load_vae_checkpoint(device,
                         encoder,
                         decoder,
                         optimizer=None,
-                        scheduler=None):
+                        scheduler=None,
+                        wandb_id=None):
     print("Loading checkpoint")
     filename = os.path.join(folder,'checkpoints',f'checkpoint_{epoch}.pth')
     if os.path.isfile(filename):

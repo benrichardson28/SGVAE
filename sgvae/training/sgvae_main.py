@@ -3,6 +3,7 @@ import os
 import os.path
 import time
 import wandb
+import wandb.util
 import json
 import torch
 from torch.utils.data import DataLoader
@@ -82,6 +83,7 @@ def main(config):
 
     # training loop
     start_epoch = checkpoint+1 if checkpoint else 0
+    
     for epoch in range(start_epoch, config.total_epochs):
         train_loss_logger.reset_epoch_loss()
         val_loss_logger.reset_epoch_loss()
@@ -110,10 +112,12 @@ def main(config):
         except:
             if (epoch + 1) % 25 == 0:
                 utils.save_vae_checkpoint(config.save_path,epoch,wandb_id,
-                                        encoder,decoder,optimizer)
+                                          encoder,decoder,optimizer)
                 
-    utils.save_vae_checkpoint(config.save_path,epoch,wandb_id,
-                                        encoder,decoder,optimizer)
+    # final save once the total_epochs has been reached.
+    utils.save_vae_checkpoint(config.save_path,config.total_epochs-1,wandb_id,
+                              encoder,decoder,optimizer)
+    
     return 0
 
 if __name__ == '__main__':

@@ -1,9 +1,12 @@
-SUBMIT_PATH="submit_utils"
+# Get global path of script. Make every other path relative.
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# Where to build arg files
+SUBMIT_PATH=$SCRIPT_DIR/cluster_utils
 if [ -n "$1" ]; then REPEATS=$1; else REPEATS=1; fi
 
 WEIGHT_DECAY_ARRAY=(0.1)
 
-rm -f tmp_logs/*
+rm -f $SCRIPT_DIR/../tmp_logs/*
 rm -f $SUBMIT_PATH/inf_args.txt
 # rm -f $SUBMIT_PATH/inf_submit.sub
 
@@ -45,33 +48,3 @@ then
 else
     python inference_main.py -c $(realpath -s $DIR)/inf_config.yaml --save_path=run$rep
 fi
-
-
-
-
-
-
-#unstable_runs = 88,89,110,116,140,145,159
-
-
-
-
-
-
-# function build_submission_file {
-# cat >$SUBMIT_PATH/inf_submit.sub <<EOL
-# executable = /home/richardson/miniconda3/envs/ball_env/bin/python
-# arguments = inference_main.py \$(a1)
-# error = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-$(Process).err
-# output = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-$(Process).out
-# log = /home/richardson/robot_haptic_perception/class_tmp_logs/lin-6-$(Process).log
-# request_memory = 20000
-# request_cpus = 1
-# request_gpus = 1
-# requirements = (TARGET.CUDACapability >= 6.0) && (TARGET.CUDACapability <= 7.5) && (TARGET.CUDAGlobalMemoryMb > 10000)
-# +MaxRunningPrice=100
-# +RunningPriceExceededAction = "restart"
-# queue a1 from $SUBMIT_PATH/inf_args.txt
-# EOL
-# cat $SUBMIT_PATH/inf_submit.sub
-# } &> /dev/null

@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from sgvae.property_maps import property_df,get_num_classes
+from sgvae import EXPLORATORY_PROCEDURE_NUM
 
 import pdb
 
@@ -222,22 +222,48 @@ def data_char(dataframe,data_type):
 #     def class_cnt(self):
 #         return get_num_classes(self.label,self.property_values)
 
+def object_property_df(path):  
+    op_df = pd.read_csv(os.path.join(path,'object_properties.csv'))
+
+    cnt_tps = op_df['contents'].unique()
+    op_df['contents_fine_label'] = [np.where(op_df['contents'].iloc[i]==cnt_tps)[0].item() \
+                                    for i in range(len(op_df))]
+    op_df['contents_binary_label'] = [(i is not None) for i in op_df['contents']]
+
+    #scaling labels, easy to invert later if necessary
+    for col in ['width','height','stiffness','mass']:
+        op_df[col] /= op_df[col].max()
+
+    return op_df.set_index('ball_id')
+
+def get_num_classes(property_df,label):
+    if 'contents_fine' in label:
+        cnt = property_df['contents_fine_label'].unique().shape[0]
+    elif 'contents_binary' in label:
+        cnt = property_df['contents_binary_label'].unique().shape[0]
+    else:
+        cnt = property_df['ball_id'].unique().shape[0]
+    return cnt
 
 class latent_representations(Dataset):
     """Dataset for storing latent representations of samples in a 
     trained model. The dataset is initialized empty and can be added to
     using the available methods. 
 
-    :param int config.action_repetitions: The number of time each action 
-    is repeated in a training sequence.
-    :param int config.style_dim: The dimensionality of the style latent space.
+    :param int action_repetitions: The number of time each action 
+        is repeated in a training sequence.
+    :param int style_dim: The dimensionality of the style latent space, but
+    only determines if style latent representations are created.
+    :param str prop_path: Path to folder containing object_properties.csv.
     """
 
-
-    def __init__(self, config):
-        self.sequence_len = config.action_repetitions*EXPLORATORY_PROCEDURE_NUM
-        self.style = (config.style_dim > 0)
-        self.property_values = property_df()
+    def __init__(self, 
+                 action_repetitions,
+                 style_dim,
+                 prop_path):
+        self.sequence_len = action_repetitions*EXPLORATORY_PROCEDURE_NUM
+        self.style = (style_dim > 0)
+        self.property_values = object_property_df(prop_path)
         columns = [f'content {i}' for i in range(self.sequence_len)]
         if self.style:
             columns.extend(f'style {i}' for i in range(self.sequence_len))
@@ -245,7 +271,6 @@ class latent_representations(Dataset):
         columns.extend(['object'])
         columns.extend(col for col in self.property_values.columns)
         self.data = pd.DataFrame(columns=columns).astype(object)
-
 
     def __len__(self):
         return len(self.data)
@@ -277,7 +302,7 @@ class latent_representations(Dataset):
         self.row[f'action {ix}'] = act
 
     def append_row(self):
-        self.data = self.data.append(self.row,ignore_index=True)
+        self.data = pd.concat([self.data,self.row],ignore_index=True)
 
     @property
     def label(self):
@@ -311,7 +336,7 @@ class latent_representations(Dataset):
 
     @property
     def class_cnt(self):
-        return get_num_classes(self.label,property_df())
+        return self.property_values.pipe(get_num_classes,self._label)
 
     @property
     def data_columns(self):
@@ -330,3 +355,5 @@ class latent_representations(Dataset):
     #     else:
     #         self.transform = transform
     #     self.data = self.apply_transform()
+
+

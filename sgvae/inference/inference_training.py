@@ -7,6 +7,7 @@ import pdb
 
 import sgvae.training.sgvae_training as sgvae_training
 import sgvae.utils as utils
+from sgvae import EXPLORATORY_PROCEDURE_NUM
 
 def gen_latent(config,loader,encoder,action_names,dataset2build):
     with torch.no_grad():
@@ -15,7 +16,7 @@ def gen_latent(config,loader,encoder,action_names,dataset2build):
             context,style_mu,style_logvar = utils.cNs_init(config,X.shape[0])
             dataset2build.start_row(obj_batch)
             for i in range(X.size(1)):
-                sm,slv,cm,clv,=sgvae_training.single_pass(X, action_batch, i, context,
+                sm,slv,cm,clv,_,_=sgvae_training.single_pass(X, action_batch, i, context,
                                                         style_mu, style_logvar,
                                                         encoder, None, training=True)
                 cont = torch.cat([cm,clv],dim=1).cpu()
@@ -33,28 +34,34 @@ def latent_dataset_generator(inf_config,vae_config):
     print('### Generate latent spaces for property inference ###')
     print('  Creating VAE models from checkpoint')
     encoder,decoder = utils.create_vae_models(vae_config)
-    encoder,decoder,_,_,indices = utils.load_vae_checkpoint(inf_config.vae_model_path,
-                                                      inf_config.vae_checkpoint,
-                                                      encoder,decoder)
+    encoder,decoder,_,_,indices,_ = utils.load_vae_checkpoint(inf_config.device,
+                                                              inf_config.vae_model_path,
+                                                              inf_config.vae_checkpoint,
+                                                              encoder,decoder)
     encoder.to(vae_config.device)
     # decoder.to(vae_config.device)
 
     print('  Build datasets')
-    vae_tr_set, vae_v_set, _, vae_ts_set = utils.create_vae_datasets(vae_config,indices,True)
-    inf_tr_set,inf_v_set,inf_ts_set = utils.create_inference_datasets(vae_config)
+    vae_tr_set, vae_v_set, _, vae_ts_set = \
+        utils.create_vae_datasets(vae_config,indices,True)
+    inf_tr_set,inf_v_set,inf_ts_set = \
+        utils.create_inference_datasets(vae_config.action_repetitions,
+                                        vae_config.style_dim,
+                                        inf_config.property_path
+                                        )
     kwargs = {'num_workers': 1, 'pin_memory': True}
 
     for vaeds,infds in zip([vae_tr_set,vae_v_set,vae_ts_set],
                            [inf_tr_set,inf_v_set,inf_ts_set]):
-        loader = DataLoader(vaeds,batch_size=vae_config.batch_size,**kwargs)
+        loader = DataLoader(vaeds,batch_size=vae_config.batch_size,**kwargs)  #type:ignore
         for _ in range(inf_config.repetitions):
-            vaeds.random_context_sampler()
-            gen_latent(vae_config,loader,encoder,vaeds.act_list,infds)
-
+            vaeds.random_context_sampler()                                    #type:ignore
+            gen_latent(vae_config,loader,encoder,vaeds.act_list,infds)        #type:ignore
+ 
     return inf_tr_set,inf_v_set,inf_ts_set
 
 def process_epoch(config, model, loader, loss_func, optimizer=None):
-    total_loss = 0
+    total_loss = torch.tensor(0.)
     for data,_,_,labels in loader:
   
         pred = model(data.to(config.device))

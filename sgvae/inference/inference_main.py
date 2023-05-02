@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import wandb
+import wandb.util
 
 from sgvae.networks import Property_model
 import sgvae.cmd_parser as cmd_parser
@@ -67,9 +68,11 @@ def main(inf_config,vae_config):
             inf_config.save_path = os.path.join(base_path,'models',
                                                 f'{property}_{latent}')
 
+            
             if latent=='content': dim = 2*vae_config.content_dim
-            if latent=='style': dim = 2*vae_config.style_dim
-            model = Property_model(z_dim=dim, num_classes=class_cnt).to(inf_config.device)
+            elif latent=='style': dim = 2*vae_config.style_dim
+            
+            model = Property_model(z_dim=dim, num_classes=class_cnt).to(inf_config.device)   #type:ignore
             optimizer = optim.Adam(
                 list(model.parameters()),
                 lr=inf_config.initial_learning_rate,
@@ -88,7 +91,7 @@ def main(inf_config,vae_config):
                     res_row = {'Property':property,'Latent Type':latent,
                                'Iteration':iter,'Dataset Type':d_name,
                                'MLE Loss':loss}
-                    results_df = results_df.append(res_row,ignore_index=True)
+                    results_df = pd.concat([results_df,res_row],ignore_index=True)               
 
             # wrap up
             wandb.finish()

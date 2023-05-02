@@ -1,9 +1,13 @@
-UTILS_PATH="submit_utils"
+# Get global path of script. Make every other path relative.
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# Where to build arg files
+SUBMIT_PATH=$SCRIPT_DIR/cluster_SUBMIT
+# Where to output run data
 now=`date +"%Y-%m-%d:%S"`
-RUN_FOLDER="runs_$now"
+RUN_FOLDER=$SCRIPT_DIR/../runs_$now
 
-rm -f tmp_logs/*
-rm -f $UTILS_PATH/sgvae_args.txt
+rm -f $SCRIPT_DIR/../tmp_logs/*
+rm -f $SUBMIT_PATH/sgvae_args.txt
 
 if [ -n "$1" ]; then REPEATS=$1; else REPEATS=1; fi
 
@@ -43,8 +47,8 @@ for key in ${!RUN_PARAMS[@]}; do
 done
 
 mkdir -p $path
-envsubst < $UTILS_PATH/sgvae_config.yaml > $path/sgvae_config.yaml
-echo "-c $path/sgvae_config.yaml">> $UTILS_PATH/sgvae_args.txt
+envsubst < $SUBMIT_PATH/sgvae_config.yaml > $path/sgvae_config.yaml
+echo "-c $path/sgvae_config.yaml">> $SUBMIT_PATH/sgvae_args.txt
 COUNTER=$[COUNTER+1]
 #exit 0
 }
@@ -69,7 +73,7 @@ recursive_parameters "${param_names[@]}"
 
 if [ -n "$2" ]
 then
-    condor_submit_bid $2 "$UTILS_PATH"/sgvae_submit.sub
+    condor_submit_bid $2 "$SUBMIT_PATH"/sgvae_submit.sub
 else
     echo "doing nothing"
     #python inference_main.py -c $(realpath -s $DIR)/inf_config.yaml --save_path=run$rep
