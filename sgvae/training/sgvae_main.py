@@ -120,6 +120,10 @@ def main(config):
     
     return 0
 
+def launcher():
+    config = cmd_parser.parse_vae_config(sys.argv[1:])
+    sys.exit(main(config))
+
 if __name__ == '__main__':
     config = cmd_parser.parse_vae_config(sys.argv[1:])
     sys.exit(main(config))
