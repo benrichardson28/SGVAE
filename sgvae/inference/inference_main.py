@@ -99,6 +99,12 @@ def main(inf_config,vae_config):
             results_df.to_csv(res_path,mode='a',header=not os.path.exists(res_path))
     return
 
+def launcher():
+    ing_config = cmd_parser.parse_inference_config(sys.argv[1:])
+    with open(os.path.join(inf_config.vae_model_path,'config.yaml'), 'r') as f:
+        vae_config = yaml.unsafe_load(f)
+    main(config)
+
 if __name__ == '__main__':
     inf_config = cmd_parser.parse_inference_config(sys.argv[1:])
     with open(os.path.join(inf_config.vae_model_path,'config.yaml'), 'r') as f:
